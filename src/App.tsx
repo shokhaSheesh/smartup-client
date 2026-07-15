@@ -6,6 +6,7 @@ import SetPasswordPage from './pages/SetPasswordPage'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import DocumentsListPage from './pages/DocumentsListPage'
+import DocumentDetailPage from './pages/DocumentDetailPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/documents/incoming" element={<DocumentsListPage direction="incoming" />} />
           <Route path="/documents/outgoing" element={<DocumentsListPage direction="outgoing" />} />
+          <Route path="/documents/view/:id" element={<DocumentDetailPage />} />
           <Route path="/documents/drafts" element={<PlaceholderPage title="Черновики" />} />
           <Route path="/documents/create" element={<PlaceholderPage title="Создать документ" />} />
           <Route path="/documents/import" element={<PlaceholderPage title="Импорт Excel" />} />

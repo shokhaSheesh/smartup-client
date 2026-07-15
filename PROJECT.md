@@ -118,7 +118,18 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 | `/dashboard`             | Documents dashboard (full)               | ✅ done |
 | `/documents/incoming`    | Входящие — document list page            | ✅ done |
 | `/documents/outgoing`    | Исходящие — same list page (direction)   | ✅ done |
+| `/documents/view/:id`    | Document detail (invoice render)         | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Document list** has a toggleable **Фильтр** panel (`DocumentsFilterPanel`): date range,
+type, number, amount range, «Есть льгота» → wired to filtering; Договор/Комиссионер/
+Односторонний/Маркирован are visual-only (no backing data yet). Rows are clickable →
+detail page. Создать документ button shows only on **Исходящие**.
+
+**Document detail (`DocumentDetailPage`):** breadcrumb, header card (title, ГНК status
+link, status badge, print/download, Подписать/Отказать when pending) + a faithful
+СЧЁТ-ФАКТУРА render. Sign/reject updates local status (not yet synced to the list —
+needs a shared store).
 
 **Documents list page (`DocumentsListPage`, `direction` prop):** toolbar (search by ИНН,
 print, download CSV, filter, green Создать документ) · status tabs with live counts

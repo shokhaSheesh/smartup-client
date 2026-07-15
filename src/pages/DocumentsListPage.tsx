@@ -281,7 +281,11 @@ export default function DocumentsListPage({ direction }: DocumentsListPageProps)
               </tr>
             )}
             {pageRows.map((doc) => (
-              <tr key={doc.id} className="border-b border-gray-200 last:border-b-0">
+              <tr
+                key={doc.id}
+                onClick={() => navigate(`/documents/view/${doc.id}`)}
+                className="cursor-pointer border-b border-gray-200 transition last:border-b-0 hover:bg-gray-50"
+              >
                 <td className="h-16 px-4">
                   <StatusBadge status={doc.status} />
                 </td>
@@ -293,7 +297,7 @@ export default function DocumentsListPage({ direction }: DocumentsListPageProps)
                   {doc.number} от {formatDate(doc.date)}
                 </td>
                 <td className="h-16 px-4 text-gray-900">{formatAmount(doc.amountValue)}</td>
-                <td className="h-16 px-2 text-center">
+                <td className="h-16 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                   <RowMenu
                     items={[
                       {
