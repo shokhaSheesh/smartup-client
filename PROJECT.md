@@ -105,7 +105,7 @@ npm run preview  # preview production build
 Default route `/` → `/login`. Login "Продолжить" → `/dashboard` (stub until the app
 shell design arrives). "Создать аккаунт" → `/register`.
 
-**Note:** design only provided the **ЭЦП** login tab. "По паролю" (login + password) and
+**Note:** design only provided the **ЭЦП** login tab. "По паролю" (**ИНН/ПИНФЛ** + password) and
 "USB Токен" (token select) tabs were implemented from the documented flow — swap for exact
 Figma when available.
 

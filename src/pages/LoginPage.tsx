@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   const [ecpKey, setEcpKey] = useState<string>()
   const [usbToken, setUsbToken] = useState<string>()
-  const [login, setLogin] = useState('')
+  const [innPinfl, setInnPinfl] = useState('')
   const [password, setPassword] = useState('')
 
   const canContinue =
@@ -25,7 +25,7 @@ export default function LoginPage() {
       ? Boolean(ecpKey)
       : loginType === 'usb'
         ? Boolean(usbToken)
-        : login.trim().length > 0 && password.length > 0
+        : innPinfl.trim().length > 0 && password.length > 0
 
   function handleContinue() {
     if (!canContinue) return
@@ -82,9 +82,10 @@ export default function LoginPage() {
             {loginType === 'password' && (
               <>
                 <Input
-                  placeholder="Введите логин"
-                  value={login}
-                  onChange={(e) => setLogin(e.target.value)}
+                  placeholder="Введите ИНН или ПИНФЛ"
+                  inputMode="numeric"
+                  value={innPinfl}
+                  onChange={(e) => setInnPinfl(e.target.value)}
                 />
                 <PasswordInput
                   placeholder="Введите пароль"
