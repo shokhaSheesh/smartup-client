@@ -130,9 +130,10 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 **Billing (`BillingPage`):** header (ID, active-until, Пополнить баланс), balance card +
 summary tiles, **current-subscription card** (added — plan badge, renew date, document-usage
 progress, users/integration), tabs **Тарифы** (4 plan cards, current one highlighted +
-"Ваш тариф") / **Карты** (list + edit/delete + Добавить карту) / **История** (payments) /
-**Счета** (invoices). Sub-pages: `AddCardPage` (card #, MM/YY), `TopUpBalancePage`
-(amount + Payme/Octobank/Paynet/Click/Мои карты). Mock data in `data/billing.ts`.
+"Ваш тариф") / **Карты** (list + edit/delete + Добавить карту) / **История** (payments).
+Choosing a plan opens a **checkout modal** (plan summary + payment method balance/card, no
+points field) → activates the plan live + toast. Sub-pages: `AddCardPage` (card #, MM/YY),
+`TopUpBalancePage` (amount + Payme/Octobank/Paynet/Click/Мои карты). Mock in `data/billing.ts`.
 
 **Drafts (`DraftsPage`):** search/filter/pagination like the list page, columns Номер и дата
 док / Статус / Тип / Контрагент / Номер и дата договора / Стоимость / Стоимость с НДС; rows
