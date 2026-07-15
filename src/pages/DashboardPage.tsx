@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Plus, Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { StatCards } from '@/features/dashboard/StatCards'
 import { DocumentsTable } from '@/features/dashboard/DocumentsTable'
 import { DocumentsBarChart } from '@/features/dashboard/DocumentsBarChart'
@@ -44,23 +44,6 @@ const typeOptions: FilterOption[] = [
   { value: 'all', label: 'Все типы' },
   ...DOC_TYPES.map((t) => ({ value: t, label: t })),
 ]
-
-function WarningBanner() {
-  return (
-    <div className="flex items-center gap-4 rounded-2xl bg-amber-50 p-4 shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center justify-center rounded-3xl bg-amber-100 p-3">
-        <AlertTriangle className="size-6 text-amber-400" />
-      </div>
-      <div className="flex flex-col gap-0.5">
-        <h2 className="text-xl font-medium text-gray-900">Предупреждение</h2>
-        <p className="text-base text-gray-500">
-          У вас есть непроверенный <span className="font-medium text-Smart-blue">7 документ</span>.
-          Пожалуйста, примите меры в течение 3 дней.
-        </p>
-      </div>
-    </div>
-  )
-}
 
 function QuickCreateBar() {
   return (
@@ -123,7 +106,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <WarningBanner />
       <QuickCreateBar />
 
       <div className="rounded-md bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
