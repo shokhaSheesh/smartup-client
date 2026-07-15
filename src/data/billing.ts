@@ -104,7 +104,6 @@ export const paymentHistory: PaymentHistory[] = [
   { id: 1, date: '12.04.2025', description: 'Оплата тарифа Starter', amount: '500 000 сум', status: 'success' },
   { id: 2, date: '15.03.2025', description: 'Пополнение баланса', amount: '5 000 000 сум', status: 'success' },
   { id: 3, date: '12.03.2025', description: 'Оплата тарифа Starter', amount: '500 000 сум', status: 'success' },
-  { id: 4, date: '01.03.2025', description: 'Разовая услуга: выгрузка отчёта', amount: '50 000 сум', status: 'pending' },
 ]
 
 export type Invoice = {
