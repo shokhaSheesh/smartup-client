@@ -7,10 +7,14 @@ import { ProductsBarChart } from '@/features/dashboard/ProductsBarChart'
 import { DonutCard } from '@/features/dashboard/DonutCard'
 import { FilterMenu } from '@/components/ui/FilterMenu'
 import type { FilterOption } from '@/components/ui/FilterMenu'
+import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
 import { acceptedDonut, notAcceptedDonut } from '@/data/mockCharts'
 import { mockDocuments } from '@/data/mockDocuments'
-import { directionLabel, statusLabel } from '@/types/document'
+import { DOC_TYPES } from '@/data/docTypes'
+import { directionLabel, statusLabel, numberDate } from '@/types/document'
 import type { DocDirection, DocStatus } from '@/types/document'
+import { atMidnight } from '@/lib/date'
+import type { DateRange } from '@/lib/date'
 import { cn } from '@/lib/cn'
 
 const quickCreate = [
@@ -29,11 +33,6 @@ const tabs: { value: Tab; label: string }[] = [
   { value: 'outgoing', label: 'Исходящий' },
 ]
 
-const dateOptions: FilterOption[] = [
-  { value: 'newest', label: 'Сначала новые' },
-  { value: 'oldest', label: 'Сначала старые' },
-]
-
 const statusOptions: FilterOption[] = [
   { value: 'all', label: 'Все статусы' },
   { value: 'signed', label: statusLabel.signed },
@@ -43,10 +42,7 @@ const statusOptions: FilterOption[] = [
 
 const typeOptions: FilterOption[] = [
   { value: 'all', label: 'Все типы' },
-  ...Array.from(new Set(mockDocuments.map((d) => d.type))).map((t) => ({
-    value: t,
-    label: t,
-  })),
+  ...DOC_TYPES.map((t) => ({ value: t, label: t })),
 ]
 
 function WarningBanner() {
@@ -84,17 +80,28 @@ function QuickCreateBar() {
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>('all')
-  const [dateSort, setDateSort] = useState('newest')
+  const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null })
   const [type, setType] = useState('all')
   const [status, setStatus] = useState('all')
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const result = mockDocuments.filter((doc) => {
+    const from = dateRange.start ? atMidnight(dateRange.start).getTime() : null
+    const to = dateRange.end
+      ? atMidnight(dateRange.end).getTime()
+      : dateRange.start
+        ? atMidnight(dateRange.start).getTime()
+        : null
+
+    return mockDocuments.filter((doc) => {
       if (tab !== 'all' && doc.direction !== tab) return false
       if (type !== 'all' && doc.type !== type) return false
       if (status !== 'all' && doc.status !== (status as DocStatus)) return false
+      if (from !== null && to !== null) {
+        const t = atMidnight(new Date(doc.date)).getTime()
+        if (t < from || t > to) return false
+      }
       if (q) {
         const haystack = [
           directionLabel[doc.direction],
@@ -102,7 +109,7 @@ export default function DashboardPage() {
           doc.type,
           doc.counterparty.name,
           doc.counterparty.inn,
-          doc.numberDate,
+          numberDate(doc),
           doc.creator,
           doc.amount ?? '',
         ]
@@ -112,15 +119,14 @@ export default function DashboardPage() {
       }
       return true
     })
-    return dateSort === 'oldest' ? [...result].reverse() : result
-  }, [tab, dateSort, type, status, query])
+  }, [tab, dateRange, type, status, query])
 
   return (
     <div className="flex flex-col gap-4">
       <WarningBanner />
       <QuickCreateBar />
 
-      <div className="overflow-hidden rounded-md bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
+      <div className="rounded-md bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-4 py-3">
           <div className="flex items-center gap-2.5">
             {tabs.map((t) => {
@@ -143,7 +149,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <FilterMenu label="Дата" options={dateOptions} value={dateSort} onChange={setDateSort} />
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
             <FilterMenu label="Тип документа" options={typeOptions} value={type} onChange={setType} />
             <FilterMenu label="Статус" options={statusOptions} value={status} onChange={setStatus} />
             <div className="flex w-80 items-center gap-2 rounded-[46px] border border-gray-200 bg-white px-4 py-2.5 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">

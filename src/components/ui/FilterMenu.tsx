@@ -43,21 +43,27 @@ export function FilterMenu({ label, options, value, onChange }: FilterMenuProps)
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 max-h-64 w-56 overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value)
-                setOpen(false)
-              }}
-              className="flex w-full items-center justify-between gap-2 px-3.5 py-2 text-left text-sm text-slate-700 hover:bg-gray-50"
-            >
-              <span>{opt.label}</span>
-              {opt.value === value && <Check className="size-4 text-Smart-blue" />}
-            </button>
-          ))}
+        <div className="absolute right-0 z-30 mt-2 max-h-[420px] w-72 overflow-auto rounded-xl border border-gray-100 bg-white py-2 shadow-[0px_12px_24px_0px_rgba(91,104,113,0.24)]">
+          {options.map((opt) => {
+            const active = opt.value === value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value)
+                  setOpen(false)
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between gap-2 px-5 py-3 text-left text-base font-medium transition hover:bg-gray-50',
+                  active ? 'bg-sky-50 text-slate-800' : 'text-slate-800',
+                )}
+              >
+                <span>{opt.label}</span>
+                {active && <Check className="size-5 text-Smart-blue" />}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
