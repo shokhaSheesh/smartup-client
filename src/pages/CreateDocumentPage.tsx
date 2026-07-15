@@ -106,22 +106,6 @@ export default function CreateDocumentPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Sticky action bar */}
-      <div className="sticky top-0 z-20 -mx-4 -mt-4 flex items-center justify-end gap-3 border-b border-gray-200 bg-slate-50/95 px-4 py-3 backdrop-blur">
-        <button className="flex items-center gap-2 rounded-lg bg-Smart-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">
-          <Save className="size-5" />
-          Сохранить
-          <ChevronDown className="size-4" />
-        </button>
-        <button
-          onClick={() => navigate('/documents/outgoing')}
-          className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
-        >
-          <Check className="size-5" />
-          Подписать
-        </button>
-      </div>
-
       {/* Type + header */}
       <div className="rounded-md border border-gray-200 bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
         <div className="flex items-center gap-4 border-b border-black/10 px-6 py-4">
@@ -326,6 +310,22 @@ export default function CreateDocumentPage() {
 
       {/* Grand total */}
       <div className="text-lg font-bold text-slate-800">Итого: {money(grandTotal)}</div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-center gap-3 pt-2">
+        <button className="flex items-center gap-2 rounded-lg bg-Smart-blue px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">
+          <Save className="size-5" />
+          Сохранить
+          <ChevronDown className="size-4" />
+        </button>
+        <button
+          onClick={() => navigate('/documents/outgoing')}
+          className="flex items-center gap-2 rounded-lg bg-Smart-green px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
+        >
+          <Check className="size-5" />
+          Подписать
+        </button>
+      </div>
     </div>
   )
 }
