@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react'
 import {
   Search,
   Plus,
-  RotateCcw,
   Trash2,
+  Check,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
 } from 'lucide-react'
-import { mockProducts } from '@/data/mockProducts'
+import { mockProducts, productCatalog } from '@/data/mockProducts'
 import type { Product } from '@/data/mockProducts'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/cn'
@@ -28,10 +27,10 @@ const input =
 export default function ProductsPage() {
   const [products, setProducts] = useState(mockProducts)
   const [query, setQuery] = useState('')
-  const [addQuery, setAddQuery] = useState('')
   const [page, setPage] = useState(1)
   const [addOpen, setAddOpen] = useState(false)
-  const [draft, setDraft] = useState({ code: '', name: '', unit: '', barcode: '' })
+  const [catalogQuery, setCatalogQuery] = useState('')
+  const [addedIds, setAddedIds] = useState<Set<number>>(new Set())
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -48,68 +47,49 @@ export default function ProductsPage() {
   const currentPage = Math.min(page, totalPages)
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
-  function addProduct() {
-    if (!draft.code && !draft.name) return
-    const next: Product = {
-      id: Math.max(0, ...products.map((p) => p.id)) + 1,
-      code: draft.code || '—',
-      name: draft.name || '—',
-      unit: draft.unit || '—',
-      barcode: draft.barcode || draft.code || '—',
-    }
+  const catalogResults = useMemo(() => {
+    const q = catalogQuery.trim().toLowerCase()
+    if (!q) return []
+    return productCatalog.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
+    )
+  }, [catalogQuery])
+
+  function addFromCatalog(item: Product) {
+    const next: Product = { ...item, id: Math.max(0, ...products.map((p) => p.id)) + 1 }
     setProducts((p) => [next, ...p])
-    setDraft({ code: '', name: '', unit: '', barcode: '' })
-    setAddOpen(false)
+    setAddedIds((s) => new Set(s).add(item.id))
     setPage(1)
+  }
+
+  function openAdd() {
+    setCatalogQuery('')
+    setAddedIds(new Set())
+    setAddOpen(true)
   }
 
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-4">
-          <div className="relative w-96">
-            <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-500" />
-            <input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Поиск по добавленным кодам"
-              className={cn(input, 'pl-10')}
-            />
-          </div>
-          <div className="flex flex-1 items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-500" />
-              <input
-                value={addQuery}
-                onChange={(e) => setAddQuery(e.target.value)}
-                placeholder="Поиск"
-                className={cn(input, 'pl-10 pr-9')}
-              />
-              <ChevronDown className="pointer-events-none absolute right-3 top-3 size-5 text-gray-400" />
-            </div>
-            <button
-              onClick={() => setAddOpen(true)}
-              className="flex items-center gap-2 rounded-md bg-Smart-green px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-105"
-            >
-              <Plus className="size-5" />
-              Добавить
-            </button>
-          </div>
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-500" />
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setPage(1)
+            }}
+            placeholder="Поиск по добавленным кодам"
+            className={cn(input, 'pl-10')}
+          />
         </div>
         <button
-          onClick={() => {
-            setQuery('')
-            setAddQuery('')
-            setPage(1)
-          }}
-          className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-Smart-blue transition hover:bg-gray-50"
+          onClick={openAdd}
+          className="flex items-center gap-2 rounded-md bg-Smart-green px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-105"
         >
-          <RotateCcw className="size-5" />
-          Очистить
+          <Plus className="size-5" />
+          Добавить
         </button>
       </div>
 
@@ -192,21 +172,68 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Add modal */}
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Добавить товар/услугу">
-        <div className="flex flex-col gap-4 p-6">
-          <input className={input} placeholder="Классификатор коди" value={draft.code} onChange={(e) => setDraft((d) => ({ ...d, code: e.target.value }))} />
-          <input className={input} placeholder="Классификатор названия" value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} />
-          <input className={input} placeholder="Единица измерения" value={draft.unit} onChange={(e) => setDraft((d) => ({ ...d, unit: e.target.value }))} />
-          <input className={input} placeholder="Товар/хизмат штрих коди" value={draft.barcode} onChange={(e) => setDraft((d) => ({ ...d, barcode: e.target.value }))} />
-          <div className="flex gap-3">
-            <button onClick={() => setAddOpen(false)} className="flex-1 rounded-lg border border-gray-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-gray-50">
-              Отмена
-            </button>
-            <button onClick={addProduct} className="flex-1 rounded-lg bg-Smart-green py-2.5 text-sm font-semibold text-white hover:brightness-105">
-              Добавить
-            </button>
+      {/* Add modal — search the catalog */}
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Добавить товар/услугу" maxWidth="max-w-2xl">
+        <div className="flex flex-col p-6">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-500" />
+            {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+            <input
+              autoFocus
+              value={catalogQuery}
+              onChange={(e) => setCatalogQuery(e.target.value)}
+              placeholder="Поиск по названию или коду"
+              className={cn(input, 'pl-10')}
+            />
           </div>
+
+          <div className="mt-4 max-h-96 overflow-y-auto">
+            {catalogQuery.trim() === '' ? (
+              <div className="py-10 text-center text-sm text-gray-400">
+                Введите название или код для поиска
+              </div>
+            ) : catalogResults.length === 0 ? (
+              <div className="py-10 text-center text-sm text-gray-400">Ничего не найдено</div>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {catalogResults.map((item) => {
+                  const added = addedIds.has(item.id)
+                  return (
+                    <li key={item.id}>
+                      <button
+                        onClick={() => !added && addFromCatalog(item)}
+                        disabled={added}
+                        className="flex w-full items-center gap-3 rounded-lg border border-gray-100 px-4 py-3 text-left transition hover:bg-gray-50 disabled:cursor-default"
+                      >
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-slate-800">{item.name}</div>
+                          <div className="mt-0.5 text-xs text-gray-400">
+                            {item.code} · {item.unit}
+                          </div>
+                        </div>
+                        {added ? (
+                          <span className="flex items-center gap-1 text-sm font-medium text-Smart-green">
+                            <Check className="size-4" /> Добавлено
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-sm font-medium text-Smart-blue">
+                            <Plus className="size-4" /> Добавить
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
+          <button
+            onClick={() => setAddOpen(false)}
+            className="mt-5 self-end rounded-lg bg-Smart-blue px-6 py-2.5 text-sm font-semibold text-white hover:brightness-105"
+          >
+            Готово
+          </button>
         </div>
       </Modal>
     </div>
