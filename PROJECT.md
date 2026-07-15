@@ -98,7 +98,7 @@ npm run preview  # preview production build
 |---------------|-----------------------|-------------|
 | `/register`          | Create account (step 1: key + phone) | ✅ done   |
 | `/register/otp`      | OTP step (4-digit + resend timer)    | ✅ done   |
-| `/register/credentials` | Set login/password                | ⬜ pending |
+| `/register/credentials` | Set password (+ confirm, rules)   | ✅ done   |
 | `/login`             | Login (key or pass)                  | ⬜ pending |
 
 Auth pages share an **AuthLayout**: branded blue background (corner brackets + document
