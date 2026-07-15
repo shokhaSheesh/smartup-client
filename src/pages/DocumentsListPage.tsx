@@ -15,6 +15,11 @@ import {
 import { mockDocuments } from '@/data/mockDocuments'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { RowMenu } from '@/components/ui/RowMenu'
+import {
+  DocumentsFilterPanel,
+  EMPTY_FILTERS,
+} from '@/features/documents/DocumentsFilterPanel'
+import type { DocFilters } from '@/features/documents/DocumentsFilterPanel'
 import { downloadDocumentsCsv } from '@/lib/download'
 import { formatDate, formatAmount } from '@/types/document'
 import type { DocDirection, DocStatus } from '@/types/document'
@@ -73,6 +78,8 @@ export default function DocumentsListPage({ direction }: DocumentsListPageProps)
   const [innQuery, setInnQuery] = useState('')
   const [pageSize, setPageSize] = useState(20)
   const [page, setPage] = useState(1)
+  const [showFilter, setShowFilter] = useState(false)
+  const [filters, setFilters] = useState<DocFilters>(EMPTY_FILTERS)
 
   const scoped = useMemo(
     () => docs.filter((d) => d.direction === direction),
@@ -86,12 +93,21 @@ export default function DocumentsListPage({ direction }: DocumentsListPageProps)
   }, [scoped])
 
   const filtered = useMemo(() => {
+    const amountFrom = filters.amountFrom ? Number(filters.amountFrom) : null
+    const amountTo = filters.amountTo ? Number(filters.amountTo) : null
     return scoped.filter((d) => {
       if (tab !== 'all' && d.status !== tab) return false
       if (innQuery.trim() && !d.counterparty.inn.includes(innQuery.trim())) return false
+      if (filters.dateFrom && d.date < filters.dateFrom) return false
+      if (filters.dateTo && d.date > filters.dateTo) return false
+      if (filters.type !== 'all' && d.type !== filters.type) return false
+      if (filters.number && !String(d.number).includes(filters.number.trim())) return false
+      if (amountFrom !== null && (d.amountValue ?? 0) < amountFrom) return false
+      if (amountTo !== null && (d.amountValue ?? 0) > amountTo) return false
+      if (filters.hasLgota && d.vatCategory !== 'С льгота') return false
       return true
     })
-  }, [scoped, tab, innQuery])
+  }, [scoped, tab, innQuery, filters])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -123,15 +139,45 @@ export default function DocumentsListPage({ direction }: DocumentsListPageProps)
           icon={<Download className="size-5" />}
           onClick={() => downloadDocumentsCsv(filtered)}
         />
-        <IconButton label="Фильтр" icon={<SlidersHorizontal className="size-5" />} />
         <button
-          onClick={() => navigate('/documents/create')}
-          className="flex items-center gap-2 rounded-lg bg-Smart-green px-4 py-2.5 text-base font-semibold text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition hover:brightness-105"
+          type="button"
+          onClick={() => setShowFilter((v) => !v)}
+          aria-label="Фильтр"
+          className={cn(
+            'flex size-11 items-center justify-center rounded-lg border transition',
+            showFilter
+              ? 'border-Smart-blue bg-Smart-blue/5 text-Smart-blue'
+              : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50',
+          )}
         >
-          <Plus className="size-5" />
-          Создать документ
+          <SlidersHorizontal className="size-5" />
         </button>
+        {direction === 'outgoing' && (
+          <button
+            onClick={() => navigate('/documents/create')}
+            className="flex items-center gap-2 rounded-lg bg-Smart-green px-4 py-2.5 text-base font-semibold text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition hover:brightness-105"
+          >
+            <Plus className="size-5" />
+            Создать документ
+          </button>
+        )}
       </div>
+
+      {showFilter && (
+        <div className="mt-4">
+          <DocumentsFilterPanel
+            initial={filters}
+            onApply={(f) => {
+              setFilters(f)
+              setPage(1)
+            }}
+            onReset={() => {
+              setFilters(EMPTY_FILTERS)
+              setPage(1)
+            }}
+          />
+        </div>
+      )}
 
       {/* Status tabs */}
       <div className="mt-6 flex items-center gap-6 border-b border-gray-200">
