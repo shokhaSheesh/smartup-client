@@ -510,15 +510,15 @@ function UserModal({
   onClose: () => void
   onSave: (u: Omit<User, 'id'>) => void
 }) {
-  const [form, setForm] = useState({ name: '', role: '', login: '', password: '' })
+  const [form, setForm] = useState({ name: '', role: '', password: '' })
   // Reset the form when a different user opens.
   const [lastId, setLastId] = useState<number | null>(null)
   if (user && user.id !== lastId) {
     setLastId(user.id)
-    setForm({ name: isNew ? '' : user.name, role: isNew ? '' : user.role, login: isNew ? '' : user.login, password: '' })
+    setForm({ name: isNew ? '' : user.name, role: isNew ? '' : user.role, password: '' })
   }
 
-  const valid = form.name.trim() && form.role && form.login.trim() && (!isNew || form.password.length >= 8)
+  const valid = form.name.trim() && form.role && (!isNew || form.password.length >= 8)
 
   return (
     <Modal open={Boolean(user)} onClose={onClose} title={isNew ? 'Новый пользователь' : 'Редактирование пользователя'}>
@@ -533,10 +533,6 @@ function UserModal({
             <Select placeholder="Выберите роль" options={initialRoles.map((r) => r.name)} value={form.role} onChange={(v) => setForm((f) => ({ ...f, role: v }))} />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Логин</label>
-            <input className={field} placeholder="Логин" value={form.login} onChange={(e) => setForm((f) => ({ ...f, login: e.target.value }))} />
-          </div>
-          <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Пароль {isNew && <span className="text-red-500">*</span>}
             </label>
@@ -544,7 +540,7 @@ function UserModal({
           </div>
           <button
             disabled={!valid}
-            onClick={() => onSave({ name: form.name, role: form.role, login: form.login })}
+            onClick={() => onSave({ name: form.name, role: form.role })}
             className="mt-1 rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Сохранить
@@ -587,18 +583,17 @@ function UsersTab() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-        <div className="grid grid-cols-[60px_1fr_1fr_1fr_120px] gap-4 border-b border-gray-200 px-6 py-4 text-base text-gray-500">
-          <span>№</span><span>Имя</span><span>Роль</span><span>Логин</span><span />
+        <div className="grid grid-cols-[60px_1fr_1fr_120px] gap-4 border-b border-gray-200 px-6 py-4 text-base text-gray-500">
+          <span>№</span><span>Имя</span><span>Роль</span><span />
         </div>
         {list.length === 0 && (
           <div className="px-6 py-10 text-center text-gray-400">Пользователи не добавлены</div>
         )}
         {list.map((u, i) => (
-          <div key={u.id} className={cn('grid grid-cols-[60px_1fr_1fr_1fr_120px] items-center gap-4 px-6 py-5', i > 0 && 'border-t border-gray-100')}>
+          <div key={u.id} className={cn('grid grid-cols-[60px_1fr_1fr_120px] items-center gap-4 px-6 py-5', i > 0 && 'border-t border-gray-100')}>
             <span className="text-gray-900">{i + 1}</span>
             <span className="text-gray-900">{u.name}</span>
             <span className="text-gray-900">{u.role}</span>
-            <span className="text-gray-900">{u.login}</span>
             <div className="flex items-center justify-end gap-2">
               <button onClick={() => openEdit(u)} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50">
                 <Pencil className="size-5" />

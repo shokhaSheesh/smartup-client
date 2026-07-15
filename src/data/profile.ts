@@ -15,13 +15,12 @@ export type User = {
   id: number
   name: string
   role: string
-  login: string
 }
 
 export const users: User[] = [
-  { id: 1, name: 'Muxlisa Xoliyorova', role: 'Пользователь', login: 'muxlisa' },
-  { id: 2, name: 'Азизбек Баходиров', role: 'Админ', login: 'azizbek' },
-  { id: 3, name: 'Kristin Watson', role: 'Управляющий', login: 'kristin' },
+  { id: 1, name: 'Muxlisa Xoliyorova', role: 'Пользователь' },
+  { id: 2, name: 'Азизбек Баходиров', role: 'Админ' },
+  { id: 3, name: 'Kristin Watson', role: 'Управляющий' },
 ]
 
 export type Role = {
