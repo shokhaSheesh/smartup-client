@@ -49,7 +49,7 @@ export default function ProductsPage() {
 
   const catalogResults = useMemo(() => {
     const q = catalogQuery.trim().toLowerCase()
-    if (!q) return []
+    if (!q) return productCatalog
     return productCatalog.filter(
       (p) => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
     )
@@ -188,11 +188,7 @@ export default function ProductsPage() {
           </div>
 
           <div className="mt-4 max-h-96 overflow-y-auto">
-            {catalogQuery.trim() === '' ? (
-              <div className="py-10 text-center text-sm text-gray-400">
-                Введите название или код для поиска
-              </div>
-            ) : catalogResults.length === 0 ? (
+            {catalogResults.length === 0 ? (
               <div className="py-10 text-center text-sm text-gray-400">Ничего не найдено</div>
             ) : (
               <ul className="flex flex-col gap-1">
