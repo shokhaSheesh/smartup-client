@@ -122,7 +122,17 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 | `/documents/create`      | Create document form                     | ✅ done |
 | `/documents/drafts`      | Черновики — drafts list                  | ✅ done |
 | `/documents/import`      | Импорт Excel — import cards              | ✅ done |
+| `/tariffs`               | Биллинг — plans/cards/history/invoices   | ✅ done |
+| `/tariffs/add-card`      | Add card form                            | ✅ done |
+| `/tariffs/topup`         | Top-up balance (payment methods)         | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Billing (`BillingPage`):** header (ID, active-until, Пополнить баланс), balance card +
+summary tiles, **current-subscription card** (added — plan badge, renew date, document-usage
+progress, users/integration), tabs **Тарифы** (4 plan cards, current one highlighted +
+"Ваш тариф") / **Карты** (list + edit/delete + Добавить карту) / **История** (payments) /
+**Счета** (invoices). Sub-pages: `AddCardPage` (card #, MM/YY), `TopUpBalancePage`
+(amount + Payme/Octobank/Paynet/Click/Мои карты). Mock data in `data/billing.ts`.
 
 **Drafts (`DraftsPage`):** search/filter/pagination like the list page, columns Номер и дата
 док / Статус / Тип / Контрагент / Номер и дата договора / Стоимость / Стоимость с НДС; rows
