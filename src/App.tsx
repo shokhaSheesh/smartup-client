@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import DocumentsListPage from './pages/DocumentsListPage'
 import DocumentDetailPage from './pages/DocumentDetailPage'
+import CreateDocumentPage from './pages/CreateDocumentPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
@@ -27,7 +28,7 @@ export default function App() {
           <Route path="/documents/outgoing" element={<DocumentsListPage direction="outgoing" />} />
           <Route path="/documents/view/:id" element={<DocumentDetailPage />} />
           <Route path="/documents/drafts" element={<PlaceholderPage title="Черновики" />} />
-          <Route path="/documents/create" element={<PlaceholderPage title="Создать документ" />} />
+          <Route path="/documents/create" element={<CreateDocumentPage />} />
           <Route path="/documents/import" element={<PlaceholderPage title="Импорт Excel" />} />
           <Route path="/tariffs" element={<PlaceholderPage title="Тарифы" />} />
           <Route path="/products" element={<PlaceholderPage title="Товар и услуги" />} />

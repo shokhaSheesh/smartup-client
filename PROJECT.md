@@ -119,7 +119,13 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 | `/documents/incoming`    | Входящие — document list page            | ✅ done |
 | `/documents/outgoing`    | Исходящие — same list page (direction)   | ✅ done |
 | `/documents/view/:id`    | Document detail (invoice render)         | ✅ done |
+| `/documents/create`      | Create document form                     | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Create document (`CreateDocumentPage`):** type + variant PillSelects, header fields
+(numbers/dates/contract), Ваши сведения / Доверенность / Сведения партнера sections, and a
+line-items table with **add/delete rows + live totals** (qty×price → supply, VAT %, row
+total, Итого). Flag checkboxes (Обратный расчет/Акциз/…). Fields are UI; totals compute.
 
 **Document list** has a toggleable **Фильтр** panel (`DocumentsFilterPanel`): date range,
 type, number, amount range, «Есть льгота» → wired to filtering; Договор/Комиссионер/

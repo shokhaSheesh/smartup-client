@@ -1,0 +1,273 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Search, ChevronDown, Plus, Trash2, Check } from 'lucide-react'
+import { PillSelect } from '@/components/ui/PillSelect'
+import { DOC_TYPES } from '@/data/docTypes'
+import { cn } from '@/lib/cn'
+
+const VARIANTS = ['Стандартный', 'Дополнительный', 'Исправленный']
+const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
+const VAT_RATES = [0, 12, 15]
+
+type LineItem = {
+  id: number
+  ikpu: string
+  description: string
+  barcode: string
+  unit: string
+  qty: number
+  price: number
+  vat: number
+}
+
+let nextId = 3
+function emptyItem(): LineItem {
+  return { id: nextId++, ikpu: '', description: '', barcode: '', unit: 'Штук', qty: 0, price: 0, vat: 15 }
+}
+
+const field =
+  'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-4 rounded-md bg-white p-6 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.06)]">
+      <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+function num(v: string): number {
+  const n = Number(v.replace(/\s/g, '').replace(',', '.'))
+  return Number.isFinite(n) ? n : 0
+}
+
+function money(n: number): string {
+  return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+export default function CreateDocumentPage() {
+  const navigate = useNavigate()
+  const [docType, setDocType] = useState<string>('Счет-фактура без акта')
+  const [variant, setVariant] = useState(VARIANTS[0])
+  const [flags, setFlags] = useState({
+    reverse: true,
+    excise: false,
+    marked: false,
+    manual: false,
+  })
+  const [items, setItems] = useState<LineItem[]>([
+    { id: 1, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 12, price: 24000, vat: 15 },
+    { id: 2, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 32, price: 12000, vat: 15 },
+  ])
+
+  function updateItem(id: number, patch: Partial<LineItem>) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)))
+  }
+  function removeItem(id: number) {
+    setItems((prev) => prev.filter((it) => it.id !== id))
+  }
+
+  const rowSupply = (it: LineItem) => it.qty * it.price
+  const rowVat = (it: LineItem) => (rowSupply(it) * it.vat) / 100
+  const rowTotal = (it: LineItem) => rowSupply(it) + rowVat(it)
+  const totalSupply = items.reduce((s, it) => s + rowSupply(it), 0)
+  const grandTotal = items.reduce((s, it) => s + rowTotal(it), 0)
+
+  const cellCls = 'border-b border-r border-gray-200 px-3 py-2 text-sm'
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Type + header */}
+      <div className="rounded-md border border-gray-200 bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center gap-4 border-b border-black/10 px-6 py-4">
+          <span className="text-lg font-semibold text-black/80">Тип документа:</span>
+          <PillSelect options={[...DOC_TYPES]} value={docType} onChange={setDocType} />
+          <PillSelect options={VARIANTS} value={variant} onChange={setVariant} />
+        </div>
+        <div className="grid grid-cols-1 gap-4 p-6 lg:grid-cols-3">
+          <div className="flex flex-col gap-4">
+            <input className={field} placeholder="Номер счет-фактуры" />
+            <input className={field} placeholder="Номер контракта" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <input type="date" className={field} placeholder="Дата документа" />
+            <input type="date" className={field} placeholder="Дата контракта" />
+          </div>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-400" />
+            <input className={cn(field, 'pl-10')} placeholder="ID договора" />
+          </div>
+        </div>
+      </div>
+
+      {/* Details columns */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <Card title="Ваши сведения">
+            <label className="flex flex-col rounded-md border border-gray-300 px-3.5 py-1.5">
+              <span className="text-xs text-gray-500">ИНН / ПИНФЛ</span>
+              <input defaultValue="123456789" className="bg-transparent text-sm text-zinc-700 outline-none" />
+            </label>
+            <div className="relative">
+              <input className={field} placeholder="Названия" />
+              <ChevronDown className="pointer-events-none absolute right-3 top-3 size-5 text-gray-400" />
+            </div>
+            <button className="flex items-center justify-center gap-2 rounded-md bg-slate-50 px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-slate-100">
+              Детали <ChevronDown className="size-4" />
+            </button>
+          </Card>
+
+          <Card title="Доверенность">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative">
+                <input className={field} placeholder="Тип" />
+                <ChevronDown className="pointer-events-none absolute right-3 top-3 size-5 text-gray-400" />
+              </div>
+              <input className={field} placeholder="Номер" />
+              <input className={field} placeholder="ПИНФЛ доверенного лица" />
+              <input className={field} placeholder="ФИО отв. лицо" />
+            </div>
+          </Card>
+        </div>
+
+        <Card title="Сведения партнера">
+          <div className="flex items-stretch">
+            <input className={cn(field, 'rounded-r-none')} placeholder="ИНН / ПИНФЛ" />
+            <button className="flex items-center justify-center rounded-r-lg bg-Smart-blue px-3.5 text-white">
+              <Search className="size-5" />
+            </button>
+          </div>
+          <input className={field} placeholder="Название" />
+          <input className={field} placeholder="Регистрационный код плательщика НДС" />
+          <div className="grid grid-cols-2 gap-4">
+            <input className={field} placeholder="Расчетный счет" />
+            <input className={field} placeholder="МФО, SWIFT и др." />
+            <input className={field} placeholder="Директор" />
+            <input className={field} placeholder="Глав. бух." />
+          </div>
+          <input className={field} placeholder="Адрес" />
+        </Card>
+      </div>
+
+      {/* Line items */}
+      <div className="rounded-md border border-gray-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-6 py-4">
+          <div className="flex flex-wrap items-center gap-6">
+            {[
+              ['reverse', 'Обратный расчет'],
+              ['excise', 'Акциз'],
+              ['marked', 'Товар маркирован'],
+              ['manual', 'Ручное вычесление'],
+            ].map(([key, label]) => {
+              const checked = flags[key as keyof typeof flags]
+              return (
+                <label key={key} className="flex cursor-pointer items-center gap-2 text-sm text-gray-500">
+                  <span
+                    onClick={() => setFlags((f) => ({ ...f, [key]: !checked }))}
+                    className={cn(
+                      'flex size-4 items-center justify-center rounded-sm border',
+                      checked ? 'border-Smart-green bg-gray-50 text-Smart-green' : 'border-gray-300 bg-gray-50',
+                    )}
+                  >
+                    {checked && <Check className="size-3" strokeWidth={3} />}
+                  </span>
+                  {label}
+                </label>
+              )
+            })}
+          </div>
+          <button
+            onClick={() => setItems((prev) => [...prev, emptyItem()])}
+            className="flex items-center gap-2 rounded-md bg-blue-800 px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110"
+          >
+            <Plus className="size-5" />
+            Добавить
+          </button>
+        </div>
+
+        <div className="overflow-x-auto p-4">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-white">
+                {['№', 'ИКПУ и наименование товаров (услуг)', 'Описание товаров (услуг)', 'Штрих код', 'Ед. измер.', 'Кол-во', 'Цена', 'Стоимость поставки', 'НДС, %', 'НДС сумма', '* Всего', ''].map((h, i) => (
+                  <th key={i} className="border-b border-r border-gray-200 px-3 py-3 text-left text-sm font-semibold text-zinc-900 last:border-r-0">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it, idx) => (
+                <tr key={it.id}>
+                  <td className={cn(cellCls, 'text-center text-zinc-700')}>{idx + 1}</td>
+                  <td className={cellCls}>
+                    <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className="w-56 bg-transparent outline-none" />
+                  </td>
+                  <td className={cellCls}>
+                    <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className="w-40 bg-transparent outline-none" />
+                  </td>
+                  <td className={cellCls}>
+                    <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className="w-28 bg-transparent outline-none" />
+                  </td>
+                  <td className={cellCls}>
+                    <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className="bg-transparent outline-none">
+                      {UNITS.map((u) => <option key={u}>{u}</option>)}
+                    </select>
+                  </td>
+                  <td className={cellCls}>
+                    <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className="w-14 bg-transparent text-right outline-none" />
+                  </td>
+                  <td className={cellCls}>
+                    <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className="w-24 bg-transparent text-right outline-none" />
+                  </td>
+                  <td className={cn(cellCls, 'text-right text-zinc-700')}>{money(rowSupply(it))}</td>
+                  <td className={cellCls}>
+                    <select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} className="bg-transparent outline-none">
+                      {VAT_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
+                    </select>
+                  </td>
+                  <td className={cn(cellCls, 'text-right text-zinc-700')}>{money(rowVat(it))}</td>
+                  <td className={cn(cellCls, 'text-right font-medium text-zinc-900')}>{money(rowTotal(it))}</td>
+                  <td className={cn(cellCls, 'text-center')}>
+                    <button
+                      onClick={() => removeItem(it.id)}
+                      className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-red-500 transition hover:bg-red-50"
+                      aria-label="Удалить"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={7} className="px-3 py-3 text-right text-sm font-semibold text-slate-700">Итого:</td>
+                <td className="px-3 py-3 text-right text-sm font-semibold text-slate-800">{money(totalSupply)}</td>
+                <td colSpan={4} />
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Footer total + actions */}
+      <div className="flex items-center justify-between">
+        <div className="text-lg font-bold text-slate-800">Итого: {money(grandTotal)}</div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-gray-50"
+          >
+            Отмена
+          </button>
+          <button
+            onClick={() => navigate('/documents/outgoing')}
+            className="rounded-lg bg-Smart-green px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
+          >
+            Сохранить документ
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
