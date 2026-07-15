@@ -13,7 +13,9 @@ import {
 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { PasswordInput } from '@/components/ui/PasswordInput'
+import { OtpInput } from '@/components/ui/OtpInput'
 import { passwordRules } from '@/lib/password'
+import { useCountdown, formatMmSs } from '@/lib/useCountdown'
 import {
   branches as initialBranches,
   roles as initialRoles,
@@ -28,7 +30,7 @@ import { cn } from '@/lib/cn'
 
 type Tab = 'personal' | 'branches' | 'requisites' | 'access' | 'users' | 'logs'
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'personal', label: 'Данные компании' },
+  { key: 'personal', label: 'Данные' },
   { key: 'branches', label: 'Филиалы' },
   { key: 'requisites', label: 'Реквизиты' },
   { key: 'access', label: 'Доступы' },
@@ -83,14 +85,33 @@ function EditFieldModal({
   onSave: (key: string, value: string) => void
 }) {
   const [value, setValue] = useState('')
+  const [step, setStep] = useState<'input' | 'otp'>('input')
+  const [code, setCode] = useState('')
   const [lastKey, setLastKey] = useState<string | null>(null)
+  const { remaining, restart, isDone } = useCountdown(59)
+
   if (target && target.key !== lastKey) {
     setLastKey(target.key)
     setValue(target.value)
+    setStep('input')
+    setCode('')
   }
+
+  const needsOtp = target?.key === 'phone'
+
   return (
-    <Modal open={Boolean(target)} onClose={onClose} title={target ? `Изменить: ${target.label}` : ''}>
-      {target && (
+    <Modal
+      open={Boolean(target)}
+      onClose={onClose}
+      title={
+        target
+          ? step === 'otp'
+            ? 'Подтверждение номера'
+            : `Изменить: ${target.label}`
+          : ''
+      }
+    >
+      {target && step === 'input' && (
         <div className="flex flex-col gap-5 p-6">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700">{target.label}</label>
@@ -101,11 +122,51 @@ function EditFieldModal({
               Отмена
             </button>
             <button
-              disabled={!value.trim()}
+              disabled={!value.trim() || value.trim() === target.value}
+              onClick={() => {
+                if (needsOtp) {
+                  setCode('')
+                  restart()
+                  setStep('otp')
+                } else {
+                  onSave(target.key, value.trim())
+                }
+              }}
+              className="flex-1 rounded-lg bg-Smart-blue py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
+            >
+              {needsOtp ? 'Отправить код' : 'Сохранить'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {target && step === 'otp' && (
+        <div className="flex flex-col items-center gap-6 p-6">
+          <p className="text-center text-base text-slate-600">
+            Отправили код подтверждения на номер <span className="font-medium text-slate-800">{value}</span>
+          </p>
+          <OtpInput length={4} value={code} onChange={setCode} />
+          <div className="text-center text-sm font-medium">
+            {isDone ? (
+              <button onClick={restart} className="text-Smart-green hover:underline">
+                Отправить код повторно
+              </button>
+            ) : (
+              <span className="text-slate-600">
+                Отправить код повторно через <span className="text-Smart-green">{formatMmSs(remaining)}</span>
+              </span>
+            )}
+          </div>
+          <div className="flex w-full gap-3">
+            <button onClick={() => setStep('input')} className="flex-1 rounded-lg border border-gray-200 py-3 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+              Назад
+            </button>
+            <button
+              disabled={code.length !== 4}
               onClick={() => onSave(target.key, value.trim())}
               className="flex-1 rounded-lg bg-Smart-blue py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
             >
-              Сохранить
+              Подтвердить
             </button>
           </div>
         </div>
@@ -120,7 +181,6 @@ function PersonalTab() {
     inn: '397 308 543',
     address: 'Ул. Олмазор, 2а',
     phone: '+998901234567',
-    email: 'udevs@gmail.io',
   })
   const [editTarget, setEditTarget] = useState<{ key: string; label: string; value: string } | null>(null)
 
@@ -128,7 +188,6 @@ function PersonalTab() {
     { key: 'inn', label: 'ИНН/ПИНФЛ', editable: false },
     { key: 'address', label: 'Адрес', editable: false },
     { key: 'phone', label: 'Номер', editable: true },
-    { key: 'email', label: 'Электронная почта', editable: true },
   ]
 
   return (
