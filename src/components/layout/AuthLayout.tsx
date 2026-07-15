@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { ShieldCheck, Info, Phone } from 'lucide-react'
-import { Logo } from '@/components/brand/Logo'
+import wordmark from '@/assets/logo-wordmark.png'
 import {
   InstagramIcon,
   LinkedinIcon,
@@ -87,9 +87,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-8 py-6">
-        <div className="rounded-lg bg-white/95 px-3 py-1.5 shadow-sm">
-          <Logo markSize={26} />
-        </div>
+        <img src={wordmark} alt="smartup" className="h-8 w-auto" />
         <LanguageSelector />
       </header>
 

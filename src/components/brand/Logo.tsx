@@ -3,7 +3,10 @@ type LogoMarkProps = {
   className?: string
 }
 
-/** The smartup "X" pinwheel mark — blue vertical wedges, green horizontal wedges. */
+/**
+ * The smartup squircle mark — black top/bottom wedges, blue left, green right.
+ * Four triangles clipped to a squircle.
+ */
 export function LogoMark({ size = 40, className }: LogoMarkProps) {
   return (
     <svg
@@ -17,35 +20,19 @@ export function LogoMark({ size = 40, className }: LogoMarkProps) {
       aria-label="smartup"
     >
       <defs>
-        <clipPath id="logo-rounded">
-          <rect width="100" height="100" rx="26" />
+        <clipPath id="logo-squircle">
+          <rect width="100" height="100" rx="34" ry="34" />
         </clipPath>
       </defs>
-      <g clipPath="url(#logo-rounded)">
-        {/* top + bottom wedges — blue */}
-        <path d="M0 0 L100 0 L50 50 Z" fill="#1B9CD8" />
-        <path d="M0 100 L100 100 L50 50 Z" fill="#1B9CD8" />
-        {/* left + right wedges — green */}
-        <path d="M0 0 L0 100 L50 50 Z" fill="#43B02A" />
-        <path d="M100 0 L100 100 L50 50 Z" fill="#43B02A" />
+      <g clipPath="url(#logo-squircle)">
+        {/* top + bottom wedges — black */}
+        <path d="M0 0 L100 0 L50 50 Z" fill="#0A0E14" />
+        <path d="M0 100 L100 100 L50 50 Z" fill="#0A0E14" />
+        {/* left wedge — blue */}
+        <path d="M0 0 L0 100 L50 50 Z" fill="#0C97D1" />
+        {/* right wedge — green */}
+        <path d="M100 0 L100 100 L50 50 Z" fill="#35C07B" />
       </g>
     </svg>
-  )
-}
-
-type LogoProps = {
-  className?: string
-  markSize?: number
-}
-
-/** Full lockup: mark + "smartup" wordmark. */
-export function Logo({ className, markSize = 30 }: LogoProps) {
-  return (
-    <div className={`inline-flex items-center gap-2 ${className ?? ''}`}>
-      <LogoMark size={markSize} />
-      <span className="text-2xl font-semibold tracking-tight text-neutral-900">
-        smartup
-      </span>
-    </div>
   )
 }
