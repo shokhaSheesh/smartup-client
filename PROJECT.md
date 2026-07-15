@@ -100,10 +100,30 @@ npm run preview  # preview production build
 | `/register/otp`      | OTP step (4-digit + resend timer)    | ✅ done   |
 | `/register/credentials` | Set password (+ confirm, rules)   | ✅ done   |
 | `/login`             | Login — 3 tabs: ЭЦП / По паролю / USB Токен | ✅ done |
-| `/dashboard`         | App shell / dashboard (placeholder stub)    | 🟡 stub |
 
-Default route `/` → `/login`. Login "Продолжить" → `/dashboard` (stub until the app
-shell design arrives). "Создать аккаунт" → `/register`.
+Default route `/` → `/login`. Login "Продолжить" → `/dashboard`. "Создать аккаунт" →
+`/register`.
+
+### App shell (post-login)
+
+Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
+- **Sidebar** (`AppSidebar` + `nav.ts`): Дашборд · Документы ▸ (Входящие/Исходящие/Черновики/
+  Создать документ/Импорт Excel) · Тарифы · Товар и услуги · EDI ▸ (Продажи/Закупки);
+  bottom: Support · Профиль · Войти. Expandable groups + **collapse toggle** (icon-only).
+- **Topbar** (`AppTopbar`): balance + Пополнить, ИНН, UZ flag, notifications bell,
+  company switcher (Udevs MCHJ). Collapse button on the left.
+
+| Route                    | Screen                                   | Status  |
+|--------------------------|------------------------------------------|---------|
+| `/dashboard`             | Documents dashboard (full)               | ✅ done |
+| `/documents/incoming`    | same view (Входящие)                     | ✅ done |
+| other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Dashboard (`DashboardPage` + `features/dashboard/`):** warning banner · quick-create row
+(6 doc types) · toolbar (tabs Все/Входящий/Исходящий + Дата/Тип/Статус filters + search) ·
+5 stat cards · documents table (StatusBadge, select-all) · stacked bar chart · grouped bar
+chart · 2 donut charts. Charts use **recharts**; mock data in `src/data/mockCharts.ts`,
+`mockDocuments.ts`.
 
 **Note:** design only provided the **ЭЦП** login tab. "По паролю" (**ИНН/ПИНФЛ** + password) and
 "USB Токен" (token select) tabs were implemented from the documented flow — swap for exact
