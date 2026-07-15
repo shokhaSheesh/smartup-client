@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { Copy } from 'lucide-react'
-import { mockDocuments } from '@/data/mockDocuments'
+import type { DocumentRow } from '@/types/document'
 import { directionLabel } from '@/types/document'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/lib/cn'
 
 const headers = ['№', 'Документы', 'Статус', 'Тип документа', 'Контрагент', 'Номер и дата', 'Сумма', 'Создатель']
 
-export function DocumentsTable() {
+export function DocumentsTable({ documents }: { documents: DocumentRow[] }) {
   const [selected, setSelected] = useState<Set<number>>(new Set())
-  const allSelected = selected.size === mockDocuments.length
+  const allSelected = documents.length > 0 && selected.size === documents.length
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(mockDocuments.map((d) => d.id)))
+    setSelected(allSelected ? new Set() : new Set(documents.map((d) => d.id)))
   }
   function toggleOne(id: number) {
     setSelected((prev) => {
@@ -51,7 +51,17 @@ export function DocumentsTable() {
               </tr>
             </thead>
             <tbody>
-              {mockDocuments.map((doc) => (
+              {documents.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={headers.length + 1}
+                    className="border-b border-gray-200 px-4 py-10 text-center text-gray-400"
+                  >
+                    Документы не найдены
+                  </td>
+                </tr>
+              )}
+              {documents.map((doc) => (
                 <tr key={doc.id} className="bg-gray-50">
                   <td className="border-b border-r border-gray-200 px-4 py-3 text-center text-zinc-700">
                     {doc.id}

@@ -1,11 +1,16 @@
-import { useState } from 'react'
-import { AlertTriangle, Plus, ChevronDown, Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { AlertTriangle, Plus, Search } from 'lucide-react'
 import { StatCards } from '@/features/dashboard/StatCards'
 import { DocumentsTable } from '@/features/dashboard/DocumentsTable'
 import { DocumentsBarChart } from '@/features/dashboard/DocumentsBarChart'
 import { ProductsBarChart } from '@/features/dashboard/ProductsBarChart'
 import { DonutCard } from '@/features/dashboard/DonutCard'
+import { FilterMenu } from '@/components/ui/FilterMenu'
+import type { FilterOption } from '@/components/ui/FilterMenu'
 import { acceptedDonut, notAcceptedDonut } from '@/data/mockCharts'
+import { mockDocuments } from '@/data/mockDocuments'
+import { directionLabel, statusLabel } from '@/types/document'
+import type { DocDirection, DocStatus } from '@/types/document'
 import { cn } from '@/lib/cn'
 
 const quickCreate = [
@@ -17,8 +22,32 @@ const quickCreate = [
   'Акт сверки',
 ]
 
-const tabs = ['Все документы', 'Входящий', 'Исходящий']
-const filters = ['Дата', 'Счет-фактура (ФАРМ)', 'Статус']
+type Tab = 'all' | DocDirection
+const tabs: { value: Tab; label: string }[] = [
+  { value: 'all', label: 'Все документы' },
+  { value: 'incoming', label: 'Входящий' },
+  { value: 'outgoing', label: 'Исходящий' },
+]
+
+const dateOptions: FilterOption[] = [
+  { value: 'newest', label: 'Сначала новые' },
+  { value: 'oldest', label: 'Сначала старые' },
+]
+
+const statusOptions: FilterOption[] = [
+  { value: 'all', label: 'Все статусы' },
+  { value: 'signed', label: statusLabel.signed },
+  { value: 'pending', label: statusLabel.pending },
+  { value: 'canceled', label: statusLabel.canceled },
+]
+
+const typeOptions: FilterOption[] = [
+  { value: 'all', label: 'Все типы' },
+  ...Array.from(new Set(mockDocuments.map((d) => d.type))).map((t) => ({
+    value: t,
+    label: t,
+  })),
+]
 
 function WarningBanner() {
   return (
@@ -53,66 +82,88 @@ function QuickCreateBar() {
   )
 }
 
-function Toolbar() {
-  const [activeTab, setActiveTab] = useState(tabs[0])
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-4 py-3">
-      <div className="flex items-center gap-2.5">
-        {tabs.map((tab) => {
-          const active = tab === activeTab
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                'flex h-10 items-center rounded-[32px] px-4 text-base font-medium transition',
-                active
-                  ? 'bg-Smart-blue text-white shadow-[1px_2px_12px_0px_rgba(0,0,0,0.12)]'
-                  : 'bg-gray-50 text-Smart-blue hover:bg-gray-100',
-              )}
-            >
-              {tab}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="flex items-center gap-2.5">
-        {filters.map((f) => (
-          <button
-            key={f}
-            className="flex h-11 items-center gap-1 rounded-[46px] border border-gray-200 bg-gray-50 pl-4 pr-2.5 text-sm font-medium text-slate-700"
-          >
-            {f}
-            <ChevronDown className="size-5 text-gray-500" />
-          </button>
-        ))}
-        <div className="flex w-80 items-center gap-2 rounded-[46px] border border-gray-200 bg-white px-4 py-2.5 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
-          <Search className="size-5 text-gray-400" />
-          <input
-            placeholder="Поиск"
-            className="flex-1 bg-transparent text-base text-gray-700 outline-none placeholder:text-gray-400"
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function DashboardPage() {
+  const [tab, setTab] = useState<Tab>('all')
+  const [dateSort, setDateSort] = useState('newest')
+  const [type, setType] = useState('all')
+  const [status, setStatus] = useState('all')
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const result = mockDocuments.filter((doc) => {
+      if (tab !== 'all' && doc.direction !== tab) return false
+      if (type !== 'all' && doc.type !== type) return false
+      if (status !== 'all' && doc.status !== (status as DocStatus)) return false
+      if (q) {
+        const haystack = [
+          directionLabel[doc.direction],
+          statusLabel[doc.status],
+          doc.type,
+          doc.counterparty.name,
+          doc.counterparty.inn,
+          doc.numberDate,
+          doc.creator,
+          doc.amount ?? '',
+        ]
+          .join(' ')
+          .toLowerCase()
+        if (!haystack.includes(q)) return false
+      }
+      return true
+    })
+    return dateSort === 'oldest' ? [...result].reverse() : result
+  }, [tab, dateSort, type, status, query])
+
   return (
     <div className="flex flex-col gap-4">
       <WarningBanner />
       <QuickCreateBar />
 
       <div className="overflow-hidden rounded-md bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
-        <Toolbar />
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            {tabs.map((t) => {
+              const active = t.value === tab
+              return (
+                <button
+                  key={t.value}
+                  onClick={() => setTab(t.value)}
+                  className={cn(
+                    'flex h-10 items-center rounded-[32px] px-4 text-base font-medium transition',
+                    active
+                      ? 'bg-Smart-blue text-white shadow-[1px_2px_12px_0px_rgba(0,0,0,0.12)]'
+                      : 'bg-gray-50 text-Smart-blue hover:bg-gray-100',
+                  )}
+                >
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <FilterMenu label="Дата" options={dateOptions} value={dateSort} onChange={setDateSort} />
+            <FilterMenu label="Тип документа" options={typeOptions} value={type} onChange={setType} />
+            <FilterMenu label="Статус" options={statusOptions} value={status} onChange={setStatus} />
+            <div className="flex w-80 items-center gap-2 rounded-[46px] border border-gray-200 bg-white px-4 py-2.5 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
+              <Search className="size-5 text-gray-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Поиск"
+                className="flex-1 bg-transparent text-base text-gray-700 outline-none placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="p-4">
           <StatCards />
         </div>
       </div>
 
-      <DocumentsTable />
+      <DocumentsTable documents={filtered} />
       <DocumentsBarChart />
       <ProductsBarChart />
 
