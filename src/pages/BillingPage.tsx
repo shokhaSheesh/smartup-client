@@ -10,8 +10,7 @@ import {
   Pencil,
   Trash2,
   Plus,
-  Wallet,
-  CreditCard,
+  HelpCircle,
 } from 'lucide-react'
 import {
   plans,
@@ -243,82 +242,59 @@ function CheckoutModal({
   onClose: () => void
   onConfirm: () => void
 }) {
-  const [method, setMethod] = useState<'balance' | 'card'>('balance')
+  const [points, setPoints] = useState('')
+  const balanceNumber = balance.replace(/\s*сум$/, '')
+
   return (
-    <Modal open={Boolean(plan)} onClose={onClose} title="Оформление тарифа">
+    <Modal open={Boolean(plan)} onClose={onClose} title={'План "Месячный"'}>
       {plan && (
-        <div className="flex flex-col gap-5 p-6">
-          <div className="rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold text-gray-900">{plan.name}</span>
-              <span className="text-lg font-bold text-gray-900">{plan.price}</span>
+        <div className="flex flex-col">
+          <div className="flex flex-col gap-5 px-6 pt-2">
+            {/* Balance */}
+            <div className="rounded-xl bg-green-500 px-6 py-3">
+              <div className="text-base font-medium text-gray-50">Баланс (сум)</div>
+              <div className="text-xl font-semibold text-gray-50">{balanceNumber}</div>
             </div>
-            <div className="mt-1 text-sm text-gray-500">Период: {plan.period}</div>
-          </div>
 
-          <div>
-            <div className="mb-2 text-sm font-medium text-slate-700">Способ оплаты</div>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => setMethod('balance')}
-                className={cn(
-                  'flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition',
-                  method === 'balance' ? 'border-Smart-blue ring-1 ring-Smart-blue' : 'border-gray-200 hover:bg-gray-50',
-                )}
-              >
-                <Wallet className="size-5 text-Smart-green" />
-                <div className="flex-1">
-                  <div className="font-medium text-slate-800">Списать с баланса</div>
-                  <div className="text-xs text-gray-400">Доступно: {balance}</div>
+            {/* Points */}
+            <input
+              value={points}
+              onChange={(e) => setPoints(e.target.value.replace(/\D/g, ''))}
+              inputMode="numeric"
+              placeholder="Введите баллы"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-base text-slate-800 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] outline-none placeholder:text-gray-500 focus:border-Smart-blue"
+            />
+
+            {/* Selected plan card */}
+            <div className="rounded-lg bg-gray-100">
+              <div className="flex flex-col items-center gap-2 px-6 pt-6 text-center">
+                <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                  {plan.name}
+                  <HelpCircle className="size-5 text-gray-400" />
                 </div>
-                <Radio active={method === 'balance'} />
-              </button>
-              <button
-                onClick={() => setMethod('card')}
-                className={cn(
-                  'flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition',
-                  method === 'card' ? 'border-Smart-blue ring-1 ring-Smart-blue' : 'border-gray-200 hover:bg-gray-50',
-                )}
-              >
-                <CreditCard className="size-5 text-slate-500" />
-                <div className="flex-1 font-medium text-slate-800">Банковская карта •••• 8532</div>
-                <Radio active={method === 'card'} />
-              </button>
+                <div className="text-4xl font-semibold text-gray-900">{plan.price}</div>
+                <div className="text-base text-slate-600">{plan.period}</div>
+              </div>
+              <ul className="flex flex-col gap-4 px-5 py-8">
+                {plan.features.map((f) => (
+                  <FeatureRow key={f} text={f} />
+                ))}
+              </ul>
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-gray-100 pt-4 text-sm">
-            <span className="text-gray-500">К оплате</span>
-            <span className="text-xl font-bold text-gray-900">
-              {plan.price === 'По запросу' ? 'По запросу' : `${plan.price} сум`}
-            </span>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-gray-200 py-3 text-sm font-semibold text-slate-700 transition hover:bg-gray-50"
-            >
-              Отмена
-            </button>
+          {/* Footer */}
+          <div className="px-6 py-6">
             <button
               onClick={onConfirm}
-              className="flex-1 rounded-lg bg-Smart-blue py-3 text-sm font-semibold text-white transition hover:brightness-105"
+              className="w-full rounded-lg bg-Smart-blue py-2.5 text-base font-semibold text-white shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] transition hover:brightness-105"
             >
-              {plan.price === 'По запросу' ? 'Оставить заявку' : 'Оплатить'}
+              Оплатить
             </button>
           </div>
         </div>
       )}
     </Modal>
-  )
-}
-
-function Radio({ active }: { active: boolean }) {
-  return (
-    <span className={cn('flex size-5 items-center justify-center rounded-full border', active ? 'border-Smart-blue' : 'border-gray-300')}>
-      {active && <span className="size-2.5 rounded-full bg-Smart-blue" />}
-    </span>
   )
 }
 
