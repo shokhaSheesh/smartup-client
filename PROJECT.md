@@ -31,6 +31,19 @@ already exists in Figma; the coded frontend is needed as a clickable prototype).
 | Routing    | react-router-dom v7             |
 | Data       | Mock (hardcoded in `src/data/`) |
 
+## 3a. Design tokens
+
+From Figma the only custom colors are (rest are stock Tailwind: gray/slate/neutral):
+
+| Token         | Class usage           | Value (approx from design) |
+|---------------|-----------------------|----------------------------|
+| Smart-blue    | `bg-Smart-blue`, primary button, brand blue | `#1B9CD8` |
+| Smart-green   | `text-Smart-green`, links, logo accent      | `#43B02A` |
+
+Font: **Inter** (via `@fontsource/inter`). Icons: **lucide-react**.
+Tailwind v4 theme tokens are defined in `src/index.css` under `@theme` — the Figma classes
+`bg-Smart-blue` / `text-Smart-green` work verbatim.
+
 ## 4. Project structure
 
 ```
@@ -70,7 +83,27 @@ npm run preview  # preview production build
 
 ## 7. Screens / routes (fill in from design)
 
-_TBD — populate once the user shares the Figma design._
+### Auth flow
+
+**Registration flow (multi-step):**
+1. **Register** (`/register`) — user picks their **E-IMZO (ЭЦП) key** OR **USB Token** (tab
+   toggle), selects the key from a dropdown, enters phone number, accepts the offer
+   (oferta) checkbox → **Продолжить**.
+2. **OTP** — user types the one-time code sent to their phone.
+3. **Set login/password** — user creates login + password.
+4. → redirected back to **Login** page, where they can sign in with either their **key**
+   or their **login/password**.
+
+| Route         | Screen                | Status      |
+|---------------|-----------------------|-------------|
+| `/register`   | Create account (step 1: key + phone) | 🟡 building |
+| `/register` … | OTP step              | ⬜ pending  |
+| `/register` … | Set login/password    | ⬜ pending  |
+| `/login`      | Login (key or pass)   | ⬜ pending  |
+
+Auth pages share an **AuthLayout**: branded blue background (corner brackets + document
+watermark texture), smartup logo top-left, language selector top-right (Русский /
+Узбекский / Английский), footer (Публичная оферта · О нас · Обратная связь + social icons).
 
 ## 8. Document types (fill in from design)
 
