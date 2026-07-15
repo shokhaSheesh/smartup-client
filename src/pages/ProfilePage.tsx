@@ -7,7 +7,6 @@ import {
   GripVertical,
   Plus,
   Trash2,
-  LayoutGrid,
   Check,
   RefreshCw,
   Save,
@@ -74,15 +73,64 @@ function ChangePasswordModal({ open, onClose }: { open: boolean; onClose: () => 
   )
 }
 
+function EditFieldModal({
+  target,
+  onClose,
+  onSave,
+}: {
+  target: { key: string; label: string; value: string } | null
+  onClose: () => void
+  onSave: (key: string, value: string) => void
+}) {
+  const [value, setValue] = useState('')
+  const [lastKey, setLastKey] = useState<string | null>(null)
+  if (target && target.key !== lastKey) {
+    setLastKey(target.key)
+    setValue(target.value)
+  }
+  return (
+    <Modal open={Boolean(target)} onClose={onClose} title={target ? `Изменить: ${target.label}` : ''}>
+      {target && (
+        <div className="flex flex-col gap-5 p-6">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">{target.label}</label>
+            <input autoFocus className={field} value={value} onChange={(e) => setValue(e.target.value)} />
+          </div>
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 rounded-lg border border-gray-200 py-3 text-sm font-semibold text-slate-700 hover:bg-gray-50">
+              Отмена
+            </button>
+            <button
+              disabled={!value.trim()}
+              onClick={() => onSave(target.key, value.trim())}
+              className="flex-1 rounded-lg bg-Smart-blue py-3 text-sm font-semibold text-white hover:brightness-105 disabled:opacity-50"
+            >
+              Сохранить
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
 function PersonalTab() {
   const [pwOpen, setPwOpen] = useState(false)
+  const [values, setValues] = useState<Record<string, string>>({
+    inn: '397 308 543',
+    address: 'Ул. Олмазор, 2а',
+    phone: '+998901234567',
+    email: 'udevs@gmail.io',
+  })
+  const [editTarget, setEditTarget] = useState<{ key: string; label: string; value: string } | null>(null)
+
   const rows = [
-    { label: 'ИНН/ПИНФЛ', value: '397 308 543', edit: false },
-    { label: 'Адрес', value: 'Ул. Олмазор, 2а', edit: false },
-    { label: 'Номер', value: '+998901234567', edit: true },
-    { label: 'Электронная почта', value: 'udevs@gmail.io', edit: true },
-    { label: 'Логин', value: 'test_login1', edit: false },
+    { key: 'inn', label: 'ИНН/ПИНФЛ', editable: false },
+    { key: 'address', label: 'Адрес', editable: false },
+    { key: 'phone', label: 'Номер', editable: true },
+    { key: 'email', label: 'Электронная почта', editable: true },
   ]
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div className="flex items-center gap-6">
@@ -96,12 +144,23 @@ function PersonalTab() {
       </div>
 
       {rows.map((r) => (
-        <div key={r.label} className="flex items-center gap-6">
+        <div key={r.key} className="flex items-center gap-6">
           <span className="w-32 shrink-0 text-base text-slate-700">{r.label}</span>
-          <div className="relative flex-1">
-            <input defaultValue={r.value} className={field} />
-            {r.edit && (
-              <Pencil className="absolute right-4 top-3.5 size-5 text-slate-500" />
+          <div
+            className={cn(
+              'flex flex-1 items-center rounded-xl border px-4 py-3 text-base',
+              r.editable ? 'border-gray-200 bg-white text-slate-800' : 'border-gray-200 bg-gray-50 text-slate-500',
+            )}
+          >
+            <span className="flex-1">{values[r.key]}</span>
+            {r.editable && (
+              <button
+                onClick={() => setEditTarget({ key: r.key, label: r.label, value: values[r.key] })}
+                className="text-slate-500 transition hover:text-Smart-blue"
+                aria-label={`Изменить ${r.label}`}
+              >
+                <Pencil className="size-5" />
+              </button>
             )}
           </div>
         </div>
@@ -121,6 +180,14 @@ function PersonalTab() {
       </button>
 
       <ChangePasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
+      <EditFieldModal
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSave={(key, value) => {
+          setValues((v) => ({ ...v, [key]: value }))
+          setEditTarget(null)
+        }}
+      />
     </div>
   )
 }
@@ -271,13 +338,13 @@ function RequisitesTab() {
 
 /* ---------- Доступы ---------- */
 
-function RoleEditModal({ role, onClose, onSave }: { role: Role | null; onClose: () => void; onSave: (name: string) => void }) {
+function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; isNew: boolean; onClose: () => void; onSave: (name: string) => void }) {
   const [name, setName] = useState('')
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['Доступ к подписанию']))
 
   return (
-    <Modal open={Boolean(role)} onClose={onClose} title="Редактирование роли">
+    <Modal open={Boolean(role)} onClose={onClose} title={isNew ? 'Новая роль' : 'Редактирование роли'}>
       {role && (
         <div className="flex flex-col gap-5 p-6">
           <div>
@@ -310,7 +377,11 @@ function RoleEditModal({ role, onClose, onSave }: { role: Role | null; onClose: 
               </div>
             )}
           </div>
-          <button onClick={() => onSave(name || role.name)} className="rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white hover:brightness-105">
+          <button
+            disabled={isNew && !name.trim()}
+            onClick={() => onSave(name || role.name)}
+            className="rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white hover:brightness-105 disabled:opacity-50"
+          >
             Сохранить
           </button>
         </div>
@@ -322,12 +393,26 @@ function RoleEditModal({ role, onClose, onSave }: { role: Role | null; onClose: 
 function AccessTab() {
   const [list, setList] = useState(initialRoles)
   const [editing, setEditing] = useState<Role | null>(null)
+  const [isNew, setIsNew] = useState(false)
+
+  function openNew() {
+    setIsNew(true)
+    setEditing({ id: -Date.now(), name: '', users: [] })
+  }
+  function save(name: string) {
+    if (isNew) {
+      setList((l) => [...l, { id: Math.max(0, ...l.map((r) => r.id)) + 1, name, users: [] }])
+    } else if (editing) {
+      setList((l) => l.map((r) => (r.id === editing.id ? { ...r, name } : r)))
+    }
+    setEditing(null)
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-900">Настройки</h2>
-        <button className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
+        <button onClick={openNew} className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
           <Plus className="size-5" /> Добавить
         </button>
       </div>
@@ -341,18 +426,14 @@ function AccessTab() {
             <span className="text-gray-900">{r.id}</span>
             <span className="text-gray-900">{r.name}</span>
             <div className="flex items-center justify-end gap-2">
-              {i === 0 ? (
-                <button className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50"><LayoutGrid className="size-5" /></button>
-              ) : (
-                <button onClick={() => setList((l) => l.filter((x) => x.id !== r.id))} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500"><Trash2 className="size-5" /></button>
-              )}
-              <button onClick={() => setEditing(r)} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50"><Pencil className="size-5" /></button>
+              <button onClick={() => { setIsNew(false); setEditing(r) }} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50"><Pencil className="size-5" /></button>
+              <button onClick={() => setList((l) => l.filter((x) => x.id !== r.id))} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500"><Trash2 className="size-5" /></button>
             </div>
           </div>
         ))}
       </div>
 
-      <RoleEditModal role={editing} onClose={() => setEditing(null)} onSave={() => setEditing(null)} />
+      <RoleEditModal role={editing} isNew={isNew} onClose={() => setEditing(null)} onSave={save} />
     </div>
   )
 }
@@ -460,11 +541,11 @@ function UsersTab() {
             <span className="text-gray-900">{u.role}</span>
             <span className="text-gray-900">{u.login}</span>
             <div className="flex items-center justify-end gap-2">
-              <button onClick={() => setList((l) => l.filter((x) => x.id !== u.id))} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500">
-                <Trash2 className="size-5" />
-              </button>
               <button onClick={() => openEdit(u)} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50">
                 <Pencil className="size-5" />
+              </button>
+              <button onClick={() => setList((l) => l.filter((x) => x.id !== u.id))} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500">
+                <Trash2 className="size-5" />
               </button>
             </div>
           </div>
