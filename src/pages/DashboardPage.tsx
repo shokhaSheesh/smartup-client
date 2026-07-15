@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, Search, CheckCircle2 } from 'lucide-react'
 import { StatCards } from '@/features/dashboard/StatCards'
 import { DocumentsTable } from '@/features/dashboard/DocumentsTable'
 import { DocumentsBarChart } from '@/features/dashboard/DocumentsBarChart'
@@ -67,11 +67,20 @@ function QuickCreateBar() {
 }
 
 export default function DashboardPage() {
+  const [docs, setDocs] = useState(mockDocuments)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [toast, setToast] = useState<string | null>(null)
+
   const [tab, setTab] = useState<Tab>('all')
   const [dateRange, setDateRange] = useState<DateRange>({ start: null, end: null })
   const [type, setType] = useState('all')
   const [status, setStatus] = useState('all')
   const [query, setQuery] = useState('')
+
+  // Clear selection whenever the filter criteria change.
+  useEffect(() => {
+    setSelected(new Set())
+  }, [tab, dateRange, type, status, query])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -82,7 +91,7 @@ export default function DashboardPage() {
         ? atMidnight(dateRange.start).getTime()
         : null
 
-    return mockDocuments.filter((doc) => {
+    return docs.filter((doc) => {
       if (tab !== 'all' && doc.direction !== tab) return false
       if (type !== 'all' && doc.type !== type) return false
       if (status !== 'all' && doc.status !== (status as DocStatus)) return false
@@ -107,7 +116,39 @@ export default function DashboardPage() {
       }
       return true
     })
-  }, [tab, dateRange, type, status, query])
+  }, [docs, tab, dateRange, type, status, query])
+
+  function toggleOne(id: number) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    const allSelected = filtered.length > 0 && filtered.every((d) => selected.has(d.id))
+    setSelected(allSelected ? new Set() : new Set(filtered.map((d) => d.id)))
+  }
+
+  function signSelected() {
+    const toSign = filtered.filter((d) => selected.has(d.id) && d.status === 'pending')
+    if (toSign.length === 0) return
+    const ids = new Set(toSign.map((d) => d.id))
+    setDocs((prev) =>
+      prev.map((d) => (ids.has(d.id) ? { ...d, status: 'signed' as const } : d)),
+    )
+    setSelected(new Set())
+    setToast(`Подписано документов: ${toSign.length}`)
+  }
+
+  // Auto-dismiss the toast.
+  useEffect(() => {
+    if (!toast) return
+    const id = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(id)
+  }, [toast])
 
   const statusData = useMemo(() => statusByMonth(filtered), [filtered])
   const directionData = useMemo(() => directionByMonth(filtered), [filtered])
@@ -161,7 +202,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <DocumentsTable documents={filtered} />
+      <DocumentsTable
+        documents={filtered}
+        selected={selected}
+        onToggle={toggleOne}
+        onToggleAll={toggleAll}
+        onClear={() => setSelected(new Set())}
+        onSign={signSelected}
+      />
       <DocumentsBarChart data={statusData} />
       <ProductsBarChart data={directionData} />
 
@@ -169,6 +217,13 @@ export default function DashboardPage() {
         <DonutCard title="Принятые документы" data={acceptedData} />
         <DonutCard title="Непринятые документы" data={notAcceptedData} />
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-3 text-sm font-medium text-white shadow-lg">
+          <CheckCircle2 className="size-5 text-emerald-400" />
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

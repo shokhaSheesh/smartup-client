@@ -1,37 +1,79 @@
-import { useState } from 'react'
-import { Copy } from 'lucide-react'
+import { Copy, PenLine, Download, X } from 'lucide-react'
 import type { DocumentRow } from '@/types/document'
 import { directionLabel, numberDate, formatAmount } from '@/types/document'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { cn } from '@/lib/cn'
+import { downloadDocumentsCsv } from '@/lib/download'
 
 const headers = ['№', 'Документы', 'Статус', 'Тип документа', 'Контрагент', 'Номер и дата', 'Сумма', 'Создатель']
 
-export function DocumentsTable({ documents }: { documents: DocumentRow[] }) {
-  const [selected, setSelected] = useState<Set<number>>(new Set())
-  const allSelected = documents.length > 0 && selected.size === documents.length
+type DocumentsTableProps = {
+  documents: DocumentRow[]
+  selected: Set<number>
+  onToggle: (id: number) => void
+  onToggleAll: () => void
+  onClear: () => void
+  onSign: () => void
+}
 
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(documents.map((d) => d.id)))
-  }
-  function toggleOne(id: number) {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
+export function DocumentsTable({
+  documents,
+  selected,
+  onToggle,
+  onToggleAll,
+  onClear,
+  onSign,
+}: DocumentsTableProps) {
+  const allSelected = documents.length > 0 && documents.every((d) => selected.has(d.id))
+  const selectedDocs = documents.filter((d) => selected.has(d.id))
+  const signableCount = selectedDocs.filter((d) => d.status === 'pending').length
 
   return (
     <section className="rounded-md bg-white py-2 shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
-      <div className="flex items-center justify-end gap-2.5 px-6 py-2">
-        <span className="text-base font-medium text-slate-800">Выбрать все</span>
-        <input
-          type="checkbox"
-          checked={allSelected}
-          onChange={toggleAll}
-          className="size-5 rounded border-gray-300 accent-[#1b9cd8]"
-        />
+      <div className="flex items-center justify-between gap-4 px-6 py-2">
+        {selected.size > 0 ? (
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-slate-800">
+              Выбрано: {selected.size}
+            </span>
+            <button
+              onClick={onSign}
+              disabled={signableCount === 0}
+              className="flex h-9 items-center gap-2 rounded-lg bg-Smart-blue px-3.5 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+              title={signableCount === 0 ? 'Нет документов со статусом «Ожидает»' : undefined}
+            >
+              <PenLine className="size-4" />
+              Подписать{signableCount > 0 ? ` (${signableCount})` : ''}
+            </button>
+            <button
+              onClick={() => downloadDocumentsCsv(selectedDocs)}
+              className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 text-sm font-semibold text-slate-700 transition hover:bg-gray-50"
+            >
+              <Download className="size-4" />
+              Скачать
+            </button>
+            <button
+              onClick={onClear}
+              className="flex h-9 items-center gap-1 rounded-lg px-2 text-sm font-medium text-gray-500 transition hover:bg-gray-50"
+            >
+              <X className="size-4" />
+              Отменить
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">
+            Выберите документы для подписания или скачивания
+          </span>
+        )}
+
+        <div className="flex items-center gap-2.5">
+          <span className="text-base font-medium text-slate-800">Выбрать все</span>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={onToggleAll}
+            className="size-5 rounded border-gray-300 accent-[#1b9cd8]"
+          />
+        </div>
       </div>
 
       <div className="px-6 pb-2">
@@ -97,8 +139,8 @@ export function DocumentsTable({ documents }: { documents: DocumentRow[] }) {
                     <input
                       type="checkbox"
                       checked={selected.has(doc.id)}
-                      onChange={() => toggleOne(doc.id)}
-                      className={cn('size-5 rounded border-gray-300 accent-[#1b9cd8]')}
+                      onChange={() => onToggle(doc.id)}
+                      className="size-5 rounded border-gray-300 accent-[#1b9cd8]"
                     />
                   </td>
                 </tr>

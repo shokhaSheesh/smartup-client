@@ -130,6 +130,11 @@ the **table AND all four charts** — chart data is derived from the filtered li
 `features/dashboard/selectors.ts`. Stat cards stay as static design totals. Charts use
 **recharts**.
 
+**Bulk actions:** row + "Выбрать все" checkboxes select documents. When ≥1 selected, a bulk
+bar shows **Подписать** (mass-sign — flips selected `pending` docs to `signed`, updates table
++ charts, shows a toast) and **Скачать** (downloads selected rows as a UTF-8 CSV via
+`lib/download.ts`). Selection clears on any filter change.
+
 **Note:** design only provided the **ЭЦП** login tab. "По паролю" (**ИНН/ПИНФЛ** + password) and
 "USB Токен" (token select) tabs were implemented from the documented flow — swap for exact
 Figma when available.
