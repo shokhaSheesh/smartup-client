@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronDown, Plus, Trash2, Check } from 'lucide-react'
+import { Search, ChevronDown, Plus, Trash2, Check, Save } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
@@ -17,16 +17,41 @@ type LineItem = {
   unit: string
   qty: number
   price: number
+  excise: number
   vat: number
 }
 
 let nextId = 3
 function emptyItem(): LineItem {
-  return { id: nextId++, ikpu: '', description: '', barcode: '', unit: 'Штук', qty: 0, price: 0, vat: 15 }
+  return { id: nextId++, ikpu: '', description: '', barcode: '', unit: 'Штук', qty: 0, price: 0, excise: 0, vat: 15 }
 }
 
 const field =
   'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
+
+function CheckBox({
+  checked,
+  onChange,
+  children,
+}: {
+  checked: boolean
+  onChange: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500" onClick={onChange}>
+      <span
+        className={cn(
+          'flex size-4 items-center justify-center rounded-sm border',
+          checked ? 'border-Smart-green bg-gray-50 text-Smart-green' : 'border-gray-300 bg-gray-50',
+        )}
+      >
+        {checked && <Check className="size-3" strokeWidth={3} />}
+      </span>
+      {children}
+    </label>
+  )
+}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -55,10 +80,13 @@ export default function CreateDocumentPage() {
     excise: false,
     marked: false,
     manual: false,
+    farm: false,
   })
+  const [yourFlags, setYourFlags] = useState({ komissioner: false, lgota: true, akciz: false })
+  const [partnerFlags, setPartnerFlags] = useState({ odnostoronniy: false, poruchitel: false })
   const [items, setItems] = useState<LineItem[]>([
-    { id: 1, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 12, price: 24000, vat: 15 },
-    { id: 2, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 32, price: 12000, vat: 15 },
+    { id: 1, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 12, price: 24000, excise: 0, vat: 15 },
+    { id: 2, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 32, price: 12000, excise: 0, vat: 15 },
   ])
 
   function updateItem(id: number, patch: Partial<LineItem>) {
@@ -70,7 +98,7 @@ export default function CreateDocumentPage() {
 
   const rowSupply = (it: LineItem) => it.qty * it.price
   const rowVat = (it: LineItem) => (rowSupply(it) * it.vat) / 100
-  const rowTotal = (it: LineItem) => rowSupply(it) + rowVat(it)
+  const rowTotal = (it: LineItem) => rowSupply(it) + rowVat(it) + it.excise
   const totalSupply = items.reduce((s, it) => s + rowSupply(it), 0)
   const grandTotal = items.reduce((s, it) => s + rowTotal(it), 0)
 
@@ -78,6 +106,22 @@ export default function CreateDocumentPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Sticky action bar */}
+      <div className="sticky top-0 z-20 -mx-4 -mt-4 flex items-center justify-end gap-3 border-b border-gray-200 bg-slate-50/95 px-4 py-3 backdrop-blur">
+        <button className="flex items-center gap-2 rounded-lg bg-Smart-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">
+          <Save className="size-5" />
+          Сохранить
+          <ChevronDown className="size-4" />
+        </button>
+        <button
+          onClick={() => navigate('/documents/outgoing')}
+          className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
+        >
+          <Check className="size-5" />
+          Подписать
+        </button>
+      </div>
+
       {/* Type + header */}
       <div className="rounded-md border border-gray-200 bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
         <div className="flex items-center gap-4 border-b border-black/10 px-6 py-4">
@@ -109,8 +153,22 @@ export default function CreateDocumentPage() {
               <span className="text-xs text-gray-500">ИНН / ПИНФЛ</span>
               <input defaultValue="123456789" className="bg-transparent text-sm text-zinc-700 outline-none" />
             </label>
+            <div className="rounded-lg border border-Smart-green px-3.5 py-2.5 text-sm text-slate-700">
+              Статус: Плательщик НДС (сертификат временно неактивный)
+            </div>
+            <div className="flex items-center gap-6">
+              <CheckBox checked={yourFlags.komissioner} onChange={() => setYourFlags((f) => ({ ...f, komissioner: !f.komissioner }))}>
+                Комиссионер
+              </CheckBox>
+              <CheckBox checked={yourFlags.lgota} onChange={() => setYourFlags((f) => ({ ...f, lgota: !f.lgota }))}>
+                Есть льгота
+              </CheckBox>
+              <CheckBox checked={yourFlags.akciz} onChange={() => setYourFlags((f) => ({ ...f, akciz: !f.akciz }))}>
+                Акциз
+              </CheckBox>
+            </div>
             <div className="relative">
-              <input className={field} placeholder="Названия" />
+              <input className={field} placeholder="Название" />
               <ChevronDown className="pointer-events-none absolute right-3 top-3 size-5 text-gray-400" />
             </div>
             <button className="flex items-center justify-center gap-2 rounded-md bg-slate-50 px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-slate-100">
@@ -138,8 +196,20 @@ export default function CreateDocumentPage() {
               <Search className="size-5" />
             </button>
           </div>
+          <div className="flex items-center gap-6">
+            <CheckBox checked={partnerFlags.odnostoronniy} onChange={() => setPartnerFlags((f) => ({ ...f, odnostoronniy: !f.odnostoronniy }))}>
+              Односторонний документ
+            </CheckBox>
+            <CheckBox checked={partnerFlags.poruchitel} onChange={() => setPartnerFlags((f) => ({ ...f, poruchitel: !f.poruchitel }))}>
+              Поручитель
+            </CheckBox>
+          </div>
           <input className={field} placeholder="Название" />
           <input className={field} placeholder="Регистрационный код плательщика НДС" />
+          <div className="flex gap-3">
+            <input className={field} placeholder="Коэффициент разрыва при уплате НДС (по всей цепочке)" />
+            <input className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-Smart-blue" />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <input className={field} placeholder="Расчетный счет" />
             <input className={field} placeholder="МФО, SWIFT и др." />
@@ -159,6 +229,7 @@ export default function CreateDocumentPage() {
               ['excise', 'Акциз'],
               ['marked', 'Товар маркирован'],
               ['manual', 'Ручное вычесление'],
+              ['farm', 'ФАРМ'],
             ].map(([key, label]) => {
               const checked = flags[key as keyof typeof flags]
               return (
@@ -190,7 +261,7 @@ export default function CreateDocumentPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-white">
-                {['№', 'ИКПУ и наименование товаров (услуг)', 'Описание товаров (услуг)', 'Штрих код', 'Ед. измер.', 'Кол-во', 'Цена', 'Стоимость поставки', 'НДС, %', 'НДС сумма', '* Всего', ''].map((h, i) => (
+                {['№', 'ИКПУ и наименование товаров (услуг)', 'Описание товаров (услуг)', 'Штрих код', 'Ед. измер.', 'Кол-во', 'Цена', 'Акциз сумма', 'Стоимость поставки', 'НДС, %', 'НДС сумма', '* Всего', ''].map((h, i) => (
                   <th key={i} className="border-b border-r border-gray-200 px-3 py-3 text-left text-sm font-semibold text-zinc-900 last:border-r-0">
                     {h}
                   </th>
@@ -221,6 +292,9 @@ export default function CreateDocumentPage() {
                   <td className={cellCls}>
                     <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className="w-24 bg-transparent text-right outline-none" />
                   </td>
+                  <td className={cellCls}>
+                    <input value={it.excise || ''} onChange={(e) => updateItem(it.id, { excise: num(e.target.value) })} placeholder="0" className="w-24 bg-transparent text-right outline-none" />
+                  </td>
                   <td className={cn(cellCls, 'text-right text-zinc-700')}>{money(rowSupply(it))}</td>
                   <td className={cellCls}>
                     <select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} className="bg-transparent outline-none">
@@ -241,7 +315,7 @@ export default function CreateDocumentPage() {
                 </tr>
               ))}
               <tr>
-                <td colSpan={7} className="px-3 py-3 text-right text-sm font-semibold text-slate-700">Итого:</td>
+                <td colSpan={8} className="px-3 py-3 text-right text-sm font-semibold text-slate-700">Итого:</td>
                 <td className="px-3 py-3 text-right text-sm font-semibold text-slate-800">{money(totalSupply)}</td>
                 <td colSpan={4} />
               </tr>
@@ -250,24 +324,8 @@ export default function CreateDocumentPage() {
         </div>
       </div>
 
-      {/* Footer total + actions */}
-      <div className="flex items-center justify-between">
-        <div className="text-lg font-bold text-slate-800">Итого: {money(grandTotal)}</div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-gray-50"
-          >
-            Отмена
-          </button>
-          <button
-            onClick={() => navigate('/documents/outgoing')}
-            className="rounded-lg bg-Smart-green px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-105"
-          >
-            Сохранить документ
-          </button>
-        </div>
-      </div>
+      {/* Grand total */}
+      <div className="text-lg font-bold text-slate-800">Итого: {money(grandTotal)}</div>
     </div>
   )
 }
