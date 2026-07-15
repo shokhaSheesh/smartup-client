@@ -16,7 +16,7 @@ export function ProductsBarChart() {
   return (
     <section className="rounded-md bg-white p-4 shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
       <h2 className="mb-4 text-lg font-semibold text-slate-800">
-        Купленные товары в разделе ЭЦФ
+        Входящие и исходящие товары по месяцам
       </h2>
       <ResponsiveContainer width="100%" height={340}>
         <BarChart data={groupedBarData} barCategoryGap="28%" barGap={4}>

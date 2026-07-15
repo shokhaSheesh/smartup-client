@@ -16,7 +16,7 @@ export function DocumentsBarChart() {
   return (
     <section className="rounded-md bg-white p-4 shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
       <h2 className="mb-4 text-lg font-semibold text-slate-800">
-        Купленные товары в разделе ЭЦФ
+        Документы по статусам за год
       </h2>
       <ResponsiveContainer width="100%" height={340}>
         <BarChart data={stackedBarData} barCategoryGap="30%">
