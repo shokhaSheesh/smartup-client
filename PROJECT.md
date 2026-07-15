@@ -120,7 +120,15 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 | `/documents/outgoing`    | Исходящие — same list page (direction)   | ✅ done |
 | `/documents/view/:id`    | Document detail (invoice render)         | ✅ done |
 | `/documents/create`      | Create document form                     | ✅ done |
+| `/documents/drafts`      | Черновики — drafts list                  | ✅ done |
+| `/documents/import`      | Импорт Excel — import cards              | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Drafts (`DraftsPage`):** search/filter/pagination like the list page, columns Номер и дата
+док / Статус / Тип / Контрагент / Номер и дата договора / Стоимость / Стоимость с НДС; rows
+open detail; row menu Подписать/Скачать/Удалить.
+**Import (`ImportExcelPage`):** cards (Счета-фактуры / ТТН / Гибридная / Произвольный) each
+with a working file picker (accepts .xls/.xlsx/.csv) → toast.
 
 **Create document (`CreateDocumentPage`):** type + variant PillSelects, header fields
 (numbers/dates/contract), Ваши сведения / Доверенность / Сведения партнера sections, and a
