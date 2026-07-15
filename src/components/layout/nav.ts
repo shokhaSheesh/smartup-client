@@ -4,7 +4,6 @@ import {
   FileText,
   DollarSign,
   ShoppingBag,
-  Diff,
   Headphones,
   User,
   LogOut,
@@ -33,14 +32,6 @@ export const mainNav: NavItem[] = [
   },
   { label: 'Тарифы', icon: DollarSign, to: '/tariffs' },
   { label: 'Товар и услуги', icon: ShoppingBag, to: '/products' },
-  {
-    label: 'EDI',
-    icon: Diff,
-    children: [
-      { label: 'Продажи', to: '/edi/sales' },
-      { label: 'Закупки', to: '/edi/purchases' },
-    ],
-  },
 ]
 
 export const bottomNav: NavItem[] = [

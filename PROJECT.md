@@ -108,16 +108,23 @@ Default route `/` → `/login`. Login "Продолжить" → `/dashboard`. "
 
 Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 - **Sidebar** (`AppSidebar` + `nav.ts`): Дашборд · Документы ▸ (Входящие/Исходящие/Черновики/
-  Создать документ/Импорт Excel) · Тарифы · Товар и услуги · EDI ▸ (Продажи/Закупки);
-  bottom: Support · Профиль · Войти. Expandable groups + **collapse toggle** (icon-only).
+  Создать документ/Импорт Excel) · Тарифы · Товар и услуги; bottom: Support · Профиль · Войти.
+  Expandable groups + **collapse toggle** (icon-only).
 - **Topbar** (`AppTopbar`): balance + Пополнить, ИНН, UZ flag, notifications bell,
   company switcher (Udevs MCHJ). Collapse button on the left.
 
 | Route                    | Screen                                   | Status  |
 |--------------------------|------------------------------------------|---------|
 | `/dashboard`             | Documents dashboard (full)               | ✅ done |
-| `/documents/incoming`    | same view (Входящие)                     | ✅ done |
+| `/documents/incoming`    | Входящие — document list page            | ✅ done |
+| `/documents/outgoing`    | Исходящие — same list page (direction)   | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Documents list page (`DocumentsListPage`, `direction` prop):** toolbar (search by ИНН,
+print, download CSV, filter, green Создать документ) · status tabs with live counts
+(Все/Ожидает/Подписан/Отменено) · pagination (page nav + Показать по N + total count) ·
+table (Статус/Тип/Дата обновления/Контрагент/ИНН/Номер и дата/Стоимость) · per-row menu
+(`RowMenu`: Подписать / Скачать / Отменить).
 
 **Dashboard (`DashboardPage` + `features/dashboard/`):** warning banner · quick-create row
 (6 doc types) · toolbar (tabs Все/Входящий/Исходящий + Дата/Тип/Статус filters + search) ·

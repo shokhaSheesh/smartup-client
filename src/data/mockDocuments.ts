@@ -56,5 +56,4 @@ export const docStats = [
   { key: 'signed', label: 'Подписанные', value: 1321, valueColor: 'text-Smart-blue', iconBg: 'bg-emerald-50' },
   { key: 'pending', label: 'Ожидающие', value: 648, valueColor: 'text-Smart-blue', iconBg: 'bg-amber-50' },
   { key: 'canceled', label: 'Отменённые', value: 514, valueColor: 'text-Smart-blue', iconBg: 'bg-red-50' },
-  { key: 'rejected', label: 'Отменённые', value: 120, valueColor: 'text-Smart-blue', iconBg: 'bg-gray-100' },
 ] as const
