@@ -1,0 +1,377 @@
+import { useState } from 'react'
+import {
+  Upload,
+  Pencil,
+  ChevronRight,
+  ChevronDown,
+  GripVertical,
+  Plus,
+  Trash2,
+  LayoutGrid,
+  Check,
+  RefreshCw,
+  Save,
+} from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
+import { PasswordInput } from '@/components/ui/PasswordInput'
+import { passwordRules } from '@/lib/password'
+import {
+  branches as initialBranches,
+  roles as initialRoles,
+  permissions,
+  regions,
+  districts,
+  logs,
+} from '@/data/profile'
+import type { Role } from '@/data/profile'
+import { cn } from '@/lib/cn'
+
+type Tab = 'personal' | 'branches' | 'requisites' | 'access' | 'logs'
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'personal', label: 'Персональные данные' },
+  { key: 'branches', label: 'Филиалы' },
+  { key: 'requisites', label: 'Реквизиты' },
+  { key: 'access', label: 'Доступы' },
+  { key: 'logs', label: 'Журнал логов' },
+]
+
+const field =
+  'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
+
+/* ---------- Персональные данные ---------- */
+
+function ChangePasswordModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} title="Change Password">
+      <div className="flex flex-col gap-5 p-6">
+        <div>
+          <label className="mb-1.5 block text-base font-medium text-slate-800">
+            New password <span className="text-red-500">*</span>
+          </label>
+          <PasswordInput placeholder="••••••••" />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-base font-medium text-slate-800">
+            Confirm new password <span className="text-red-500">*</span>
+          </label>
+          <PasswordInput placeholder="••••••••" />
+        </div>
+        <ul className="flex flex-col gap-2">
+          {passwordRules.map((r) => (
+            <li key={r.label} className="flex items-start gap-2 text-sm text-gray-500">
+              <span className="pt-0.5 leading-none">•</span>
+              {r.label}
+            </li>
+          ))}
+        </ul>
+        <button onClick={onClose} className="rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white hover:brightness-105">
+          Сохранить
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
+function PersonalTab() {
+  const [pwOpen, setPwOpen] = useState(false)
+  const rows = [
+    { label: 'ИНН/ПИНФЛ', value: '397 308 543', edit: false },
+    { label: 'Адрес', value: 'Ул. Олмазор, 2а', edit: false },
+    { label: 'Номер', value: '+998901234567', edit: true },
+    { label: 'Электронная почта', value: 'udevs@gmail.io', edit: true },
+    { label: 'Логин', value: 'test_login1', edit: false },
+  ]
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <div className="flex items-center gap-6">
+        <div className="flex size-24 items-center justify-center rounded-full border border-gray-200 bg-white text-sm font-bold text-slate-700">
+          udevs
+        </div>
+        <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-3 text-base font-semibold text-slate-700 hover:bg-gray-50">
+          <Upload className="size-5" />
+          Изменить фото
+        </button>
+      </div>
+
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-center gap-6">
+          <span className="w-32 shrink-0 text-base text-slate-700">{r.label}</span>
+          <div className="relative flex-1">
+            <input defaultValue={r.value} className={field} />
+            {r.edit && (
+              <Pencil className="absolute right-4 top-3.5 size-5 text-slate-500" />
+            )}
+          </div>
+        </div>
+      ))}
+
+      <button
+        onClick={() => setPwOpen(true)}
+        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-base text-slate-800 hover:bg-gray-50"
+        style={{ marginLeft: '152px' }}
+      >
+        Change password
+        <ChevronRight className="size-5 text-gray-400" />
+      </button>
+
+      <button className="rounded-xl bg-Smart-blue py-3.5 text-base font-semibold text-white hover:brightness-105" style={{ marginLeft: '152px' }}>
+        Сохранить
+      </button>
+
+      <ChangePasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
+    </div>
+  )
+}
+
+/* ---------- Филиалы ---------- */
+
+function BranchesTab() {
+  const [list, setList] = useState(initialBranches)
+  const [form, setForm] = useState({ region: '', district: '', name: '', address: '' })
+
+  function add() {
+    if (!form.name && !form.region) return
+    setList((l) => [
+      ...l,
+      { id: Math.max(0, ...l.map((b) => b.id)) + 1, name: form.name || `Филиал ${l.length + 1}`, region: form.region || 'Ташкент', address: form.address || '—' },
+    ])
+    setForm({ region: '', district: '', name: '', address: '' })
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">Новый филиал</h2>
+          <button onClick={add} className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
+            <Plus className="size-5" /> Добавить
+          </button>
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Select placeholder="Область" options={regions} value={form.region} onChange={(v) => setForm((f) => ({ ...f, region: v }))} />
+          <Select placeholder="Район" options={districts} value={form.district} onChange={(v) => setForm((f) => ({ ...f, district: v }))} />
+          <input className={field} placeholder="Филиал" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          <input className={field} placeholder="Адрес" value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white">
+        {list.map((b, i) => (
+          <div key={b.id} className={cn('flex items-center gap-4 px-6 py-4', i > 0 && 'border-t border-gray-100')}>
+            <GripVertical className="size-5 shrink-0 text-gray-300" />
+            <span className="font-bold text-gray-900">{b.name}</span>
+            <span className="text-slate-500">Область:{b.region}</span>
+            <span className="flex-1 text-slate-500">Адрес:{b.address}</span>
+            <button className="flex size-10 items-center justify-center rounded-lg border border-gray-200 text-Smart-blue hover:bg-gray-50">
+              <Pencil className="size-4" />
+            </button>
+            <button onClick={() => setList((l) => l.filter((x) => x.id !== b.id))} className="flex size-10 items-center justify-center rounded-lg border border-gray-200 text-Smart-blue hover:bg-red-50 hover:text-red-500">
+              <Trash2 className="size-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* Small inline select */
+function Select({ placeholder, options, value, onChange }: { placeholder: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="relative">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={cn(field, 'appearance-none pr-10', !value && 'text-gray-400')}>
+        <option value="">{placeholder}</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-4 top-3.5 size-5 text-gray-400" />
+    </div>
+  )
+}
+
+/* ---------- Реквизиты ---------- */
+
+function RequisitesTab() {
+  const left = ['ИНН/ПИНФЛ', 'Наименование организации', 'Регистрационный код плательщика НДС', 'Адрес', 'Телефон', 'Основной Р/С|+', 'МФО|+', 'ОКЭД', 'Регион', 'Район']
+  const right = ['Директор', 'ПИНФЛ директора', 'Главный бугалтер', 'Товар отпустил (ПИНФЛ)|+', 'Товар отпустил (ФИО)', 'НДС|v', 'Акцизный налог|v', 'Происхождения товара|v', 'Автоматичечкое заполнение СФ по ID договора']
+
+  const renderField = (spec: string) => {
+    const [label, kind] = spec.split('|')
+    return (
+      <div key={label} className="relative">
+        <input className={field} placeholder={label} />
+        {kind === '+' && (
+          <button className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-md bg-Smart-green text-white">
+            <Plus className="size-5" />
+          </button>
+        )}
+        {kind === 'v' && <ChevronDown className="pointer-events-none absolute right-4 top-3.5 size-5 text-gray-400" />}
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl font-semibold text-gray-900">Реквизиты организации</h2>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
+            <RefreshCw className="size-5" /> Обновить с НК
+          </button>
+          <button className="flex items-center gap-2 rounded-lg bg-Smart-blue px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
+            <Save className="size-5" /> Сохранить <ChevronDown className="size-4" />
+          </button>
+        </div>
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-4">{left.map(renderField)}</div>
+        <div className="flex flex-col gap-4">{right.map(renderField)}</div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- Доступы ---------- */
+
+function RoleEditModal({ role, onClose, onSave }: { role: Role | null; onClose: () => void; onSave: (name: string) => void }) {
+  const [name, setName] = useState('')
+  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set(['Доступ к подписанию']))
+
+  return (
+    <Modal open={Boolean(role)} onClose={onClose} title="Редактирование роли">
+      {role && (
+        <div className="flex flex-col gap-5 p-6">
+          <div>
+            <label className="mb-1.5 block text-base font-medium text-slate-800">Название</label>
+            <input className={field} placeholder={role.name} value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-base font-medium text-slate-800">Настройки</label>
+            <button onClick={() => setOpen((v) => !v)} className={cn(field, 'flex items-center justify-between text-left', selected.size === 0 && 'text-gray-400')}>
+              {selected.size === 0 ? 'Выберите' : `Выбрано: ${selected.size}`}
+              <ChevronDown className={cn('size-5 text-gray-400 transition', open && 'rotate-180')} />
+            </button>
+            {open && (
+              <div className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-gray-200">
+                {permissions.map((p) => {
+                  const on = selected.has(p)
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setSelected((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n })}
+                      className={cn('flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm', on ? 'bg-sky-50 text-Smart-blue' : 'text-slate-700 hover:bg-gray-50')}
+                    >
+                      <span className={cn('flex size-4 items-center justify-center rounded-sm border', on ? 'border-Smart-blue bg-Smart-blue text-white' : 'border-gray-300')}>
+                        {on && <Check className="size-3" strokeWidth={3} />}
+                      </span>
+                      <span className="flex-1">{p}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <button onClick={() => onSave(name || role.name)} className="rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white hover:brightness-105">
+            Сохранить
+          </button>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function AccessTab() {
+  const [list, setList] = useState(initialRoles)
+  const [editing, setEditing] = useState<Role | null>(null)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900">Настройки</h2>
+        <button className="flex items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
+          <Plus className="size-5" /> Добавить
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="grid grid-cols-[60px_1fr_1fr_120px] gap-4 border-b border-gray-200 px-6 py-4 text-base text-gray-500">
+          <span>№</span><span>Роли</span><span>Пользователи</span><span />
+        </div>
+        {list.map((r, i) => (
+          <div key={r.id} className={cn('grid grid-cols-[60px_1fr_1fr_120px] items-center gap-4 px-6 py-5', i > 0 && 'border-t border-gray-100')}>
+            <span className="text-gray-900">{r.id}</span>
+            <span className="text-gray-900">{r.name}</span>
+            <span className="text-gray-900">{r.users.join(', ')}</span>
+            <div className="flex items-center justify-end gap-2">
+              {i === 0 ? (
+                <button className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50"><LayoutGrid className="size-5" /></button>
+              ) : (
+                <button onClick={() => setList((l) => l.filter((x) => x.id !== r.id))} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500"><Trash2 className="size-5" /></button>
+              )}
+              <button onClick={() => setEditing(r)} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50"><Pencil className="size-5" /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <RoleEditModal role={editing} onClose={() => setEditing(null)} onSave={() => setEditing(null)} />
+    </div>
+  )
+}
+
+/* ---------- Журнал логов ---------- */
+
+function LogsTab() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-gray-50 text-left text-xs font-medium text-gray-900">
+            <th className="px-6 py-3">Дата</th>
+            <th className="px-6 py-3">Пользователь</th>
+            <th className="px-6 py-3">Действие</th>
+            <th className="px-6 py-3">IP-адрес</th>
+          </tr>
+        </thead>
+        <tbody>
+          {logs.map((l) => (
+            <tr key={l.id} className="border-t border-gray-100">
+              <td className="px-6 py-4 text-gray-900">{l.date}</td>
+              <td className="px-6 py-4 text-gray-900">{l.user}</td>
+              <td className="px-6 py-4 text-gray-900">{l.action}</td>
+              <td className="px-6 py-4 text-gray-500">{l.ip}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export default function ProfilePage() {
+  const [tab, setTab] = useState<Tab>('personal')
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-2 border-b border-gray-200">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              'h-12 border-b-2 px-3.5 text-base font-medium transition',
+              tab === t.key ? 'border-Smart-blue text-slate-800' : 'border-transparent text-gray-400 hover:text-slate-600',
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'personal' && <PersonalTab />}
+      {tab === 'branches' && <BranchesTab />}
+      {tab === 'requisites' && <RequisitesTab />}
+      {tab === 'access' && <AccessTab />}
+      {tab === 'logs' && <LogsTab />}
+    </div>
+  )
+}

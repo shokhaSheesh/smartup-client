@@ -12,6 +12,7 @@ import DraftsPage from './pages/DraftsPage'
 import ImportExcelPage from './pages/ImportExcelPage'
 import BillingPage from './pages/BillingPage'
 import ProductsPage from './pages/ProductsPage'
+import ProfilePage from './pages/ProfilePage'
 import AddCardPage from './pages/AddCardPage'
 import TopUpBalancePage from './pages/TopUpBalancePage'
 import PlaceholderPage from './pages/PlaceholderPage'
@@ -41,7 +42,7 @@ export default function App() {
           <Route path="/tariffs/topup" element={<TopUpBalancePage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/support" element={<PlaceholderPage title="Support" />} />
-          <Route path="/profile" element={<PlaceholderPage title="Профиль" />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

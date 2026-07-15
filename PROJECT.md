@@ -126,7 +126,13 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 | `/tariffs/add-card`      | Add card form                            | ✅ done |
 | `/tariffs/topup`         | Top-up balance (payment methods)         | ✅ done |
 | `/products`              | Товар и услуги — classifier table        | ✅ done |
+| `/profile`               | Профиль — 5 tabs                         | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Profile (`ProfilePage`):** tabs — **Персональные данные** (avatar + fields + Change password
+modal with rules), **Филиалы** (add form + branch list with edit/delete), **Реквизиты**
+(org fields two-col + Обновить с НК / Сохранить), **Доступы** (roles table + role-edit modal
+with the permissions multi-select), **Журнал логов** (activity table). Mock in `data/profile.ts`.
 
 **Products (`ProductsPage`):** toolbar (search-by-code, search + green Добавить, Очистить),
 table (# / Классификатор коди / названия / Единица измерения / штрих код) with per-row
