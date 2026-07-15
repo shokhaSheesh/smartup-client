@@ -242,7 +242,6 @@ function CheckoutModal({
   onClose: () => void
   onConfirm: () => void
 }) {
-  const [points, setPoints] = useState('')
   const balanceNumber = balance.replace(/\s*сум$/, '')
 
   return (
@@ -255,15 +254,6 @@ function CheckoutModal({
               <div className="text-base font-medium text-gray-50">Баланс (сум)</div>
               <div className="text-xl font-semibold text-gray-50">{balanceNumber}</div>
             </div>
-
-            {/* Points */}
-            <input
-              value={points}
-              onChange={(e) => setPoints(e.target.value.replace(/\D/g, ''))}
-              inputMode="numeric"
-              placeholder="Введите баллы"
-              className="w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-base text-slate-800 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)] outline-none placeholder:text-gray-500 focus:border-Smart-blue"
-            />
 
             {/* Selected plan card */}
             <div className="rounded-lg bg-gray-100">
