@@ -122,8 +122,13 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 **Dashboard (`DashboardPage` + `features/dashboard/`):** warning banner · quick-create row
 (6 doc types) · toolbar (tabs Все/Входящий/Исходящий + Дата/Тип/Статус filters + search) ·
 5 stat cards · documents table (StatusBadge, select-all) · stacked bar chart · grouped bar
-chart · 2 donut charts. Charts use **recharts**; mock data in `src/data/mockCharts.ts`,
-`mockDocuments.ts`.
+chart · 2 donut charts.
+
+**Single source of truth:** `mockDocuments.ts` generates a deterministic year-long dataset
+(direction/status/type/date/amount/VAT). The date/type/status filters + tabs + search drive
+the **table AND all four charts** — chart data is derived from the filtered list via
+`features/dashboard/selectors.ts`. Stat cards stay as static design totals. Charts use
+**recharts**.
 
 **Note:** design only provided the **ЭЦП** login tab. "По паролю" (**ИНН/ПИНФЛ** + password) and
 "USB Токен" (token select) tabs were implemented from the documented flow — swap for exact

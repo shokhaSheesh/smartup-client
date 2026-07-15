@@ -8,10 +8,15 @@ import { DonutCard } from '@/features/dashboard/DonutCard'
 import { FilterMenu } from '@/components/ui/FilterMenu'
 import type { FilterOption } from '@/components/ui/FilterMenu'
 import { DateRangeFilter } from '@/components/ui/DateRangeFilter'
-import { acceptedDonut, notAcceptedDonut } from '@/data/mockCharts'
+import {
+  statusByMonth,
+  directionByMonth,
+  acceptedByVat,
+  notAcceptedByStatus,
+} from '@/features/dashboard/selectors'
 import { mockDocuments } from '@/data/mockDocuments'
 import { DOC_TYPES } from '@/data/docTypes'
-import { directionLabel, statusLabel, numberDate } from '@/types/document'
+import { directionLabel, statusLabel, numberDate, formatAmount } from '@/types/document'
 import type { DocDirection, DocStatus } from '@/types/document'
 import { atMidnight } from '@/lib/date'
 import type { DateRange } from '@/lib/date'
@@ -94,7 +99,7 @@ export default function DashboardPage() {
           doc.counterparty.inn,
           numberDate(doc),
           doc.creator,
-          doc.amount ?? '',
+          formatAmount(doc.amountValue),
         ]
           .join(' ')
           .toLowerCase()
@@ -103,6 +108,11 @@ export default function DashboardPage() {
       return true
     })
   }, [tab, dateRange, type, status, query])
+
+  const statusData = useMemo(() => statusByMonth(filtered), [filtered])
+  const directionData = useMemo(() => directionByMonth(filtered), [filtered])
+  const acceptedData = useMemo(() => acceptedByVat(filtered), [filtered])
+  const notAcceptedData = useMemo(() => notAcceptedByStatus(filtered), [filtered])
 
   return (
     <div className="flex flex-col gap-4">
@@ -152,16 +162,12 @@ export default function DashboardPage() {
       </div>
 
       <DocumentsTable documents={filtered} />
-      <DocumentsBarChart />
-      <ProductsBarChart />
+      <DocumentsBarChart data={statusData} />
+      <ProductsBarChart data={directionData} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <DonutCard title="Принятые документы" data={acceptedDonut} />
-        <DonutCard
-          title="Непринятые документы"
-          data={notAcceptedDonut}
-          hideFromLegend={['Прочие']}
-        />
+        <DonutCard title="Принятые документы" data={acceptedData} />
+        <DonutCard title="Непринятые документы" data={notAcceptedData} />
       </div>
     </div>
   )

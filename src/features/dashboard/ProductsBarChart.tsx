@@ -8,21 +8,22 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-import { groupedBarData } from '@/data/mockCharts'
 
 const axisTick = { fontSize: 12, fill: '#64748b' }
 
-export function ProductsBarChart() {
+type Row = { month: string; incoming: number; outgoing: number }
+
+export function ProductsBarChart({ data }: { data: Row[] }) {
   return (
     <section className="rounded-md bg-white p-4 shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]">
       <h2 className="mb-4 text-lg font-semibold text-slate-800">
         Входящие и исходящие товары по месяцам
       </h2>
       <ResponsiveContainer width="100%" height={340}>
-        <BarChart data={groupedBarData} barCategoryGap="28%" barGap={4}>
+        <BarChart data={data} barCategoryGap="28%" barGap={4}>
           <CartesianGrid vertical={false} stroke="#eef1f4" />
           <XAxis dataKey="month" tickLine={false} axisLine={false} tick={axisTick} />
-          <YAxis tickLine={false} axisLine={false} tick={axisTick} width={38} />
+          <YAxis tickLine={false} axisLine={false} tick={axisTick} width={38} allowDecimals={false} />
           <Tooltip
             cursor={{ fill: 'rgba(0,0,0,0.03)' }}
             contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13 }}

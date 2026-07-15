@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Copy } from 'lucide-react'
 import type { DocumentRow } from '@/types/document'
-import { directionLabel, numberDate } from '@/types/document'
+import { directionLabel, numberDate, formatAmount } from '@/types/document'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { cn } from '@/lib/cn'
 
@@ -88,7 +88,7 @@ export function DocumentsTable({ documents }: { documents: DocumentRow[] }) {
                     {numberDate(doc)}
                   </td>
                   <td className="border-b border-r border-gray-200 px-4 py-3 text-zinc-700">
-                    {doc.amount ?? '-'}
+                    {formatAmount(doc.amountValue)}
                   </td>
                   <td className="border-b border-r border-gray-200 px-4 py-3 text-zinc-700">
                     {doc.creator}

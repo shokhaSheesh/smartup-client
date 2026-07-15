@@ -1,20 +1,56 @@
-import type { DocumentRow } from '@/types/document'
+import type { DocumentRow, DocDirection, DocStatus, VatCategory } from '@/types/document'
+import { DOC_TYPES } from './docTypes'
 
 const co = { name: 'OOO "UDEVS"', inn: '123456789' }
+const creators = ['Азизбек Баходиров', 'Kristin Watson', 'Jacob Jones', 'Дилшод Каримов']
+const directions: DocDirection[] = ['incoming', 'outgoing']
+const statuses: DocStatus[] = ['signed', 'signed', 'signed', 'pending', 'pending', 'canceled']
+const vatCats: VatCategory[] = ['С льгота', 'Без НДС', '0 ставка', '15 ставка']
 
-export const mockDocuments: DocumentRow[] = [
-  { id: 1, direction: 'incoming', status: 'canceled', type: 'Акт', counterparty: co, date: '2022-01-14', number: 2, amount: '100 000 000', creator: 'Азизбек Баходиров' },
-  { id: 2, direction: 'outgoing', status: 'signed', type: 'Доверенность', counterparty: co, date: '2022-02-03', number: 2, amount: null, creator: 'Kristin Watson' },
-  { id: 3, direction: 'incoming', status: 'pending', type: 'Договор (ГНК)', counterparty: co, date: '2022-03-21', number: 2, amount: '100 000 000', creator: 'Jacob Jones' },
-  { id: 4, direction: 'outgoing', status: 'signed', type: 'Счет-фактура (ФАРМ)', counterparty: co, date: '2022-04-09', number: 2, amount: '100 000 000', creator: 'Kristin Watson' },
-  { id: 5, direction: 'incoming', status: 'signed', type: 'Доверенность', counterparty: co, date: '2022-05-29', number: 2, amount: '100 000 000', creator: 'Jacob Jones' },
-  { id: 6, direction: 'outgoing', status: 'pending', type: 'Акт', counterparty: co, date: '2022-06-11', number: 2, amount: '100 000 000', creator: 'Kristin Watson' },
-  { id: 7, direction: 'incoming', status: 'signed', type: 'Доверенность', counterparty: co, date: '2022-07-18', number: 2, amount: '100 000 000', creator: 'Jacob Jones' },
-  { id: 8, direction: 'outgoing', status: 'pending', type: 'Акт сверки', counterparty: co, date: '2022-09-02', number: 2, amount: '100 000 000', creator: 'Kristin Watson' },
-  { id: 9, direction: 'incoming', status: 'signed', type: 'Товарно-транспортная накладная', counterparty: co, date: '2022-10-27', number: 2, amount: null, creator: 'Jacob Jones' },
-  { id: 10, direction: 'outgoing', status: 'canceled', type: 'Акт', counterparty: co, date: '2022-12-05', number: 2, amount: null, creator: 'Азизбек Баходиров' },
-]
+/** Deterministic pseudo-random so the dataset is stable across reloads. */
+function makeRng(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 1664525 + 1013904223) % 4294967296
+    return s / 4294967296
+  }
+}
 
+function pick<T>(arr: T[], r: number): T {
+  return arr[Math.floor(r * arr.length)]
+}
+
+function generate(): DocumentRow[] {
+  const rng = makeRng(20220101)
+  const docs: DocumentRow[] = []
+  let id = 1
+
+  for (let month = 0; month < 12; month++) {
+    const count = 8 + Math.floor(rng() * 8) // 8–15 docs per month
+    for (let k = 0; k < count; k++) {
+      const day = 1 + Math.floor(rng() * 27)
+      const status = pick(statuses, rng())
+      const hasAmount = rng() > 0.15
+      docs.push({
+        id: id++,
+        direction: pick(directions, rng()),
+        status,
+        type: pick([...DOC_TYPES], rng()),
+        counterparty: co,
+        date: `2022-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        number: 1 + Math.floor(rng() * 900),
+        amountValue: hasAmount ? (1 + Math.floor(rng() * 200)) * 1_000_000 : null,
+        vatCategory: pick(vatCats, rng()),
+        creator: pick(creators, rng()),
+      })
+    }
+  }
+  return docs
+}
+
+export const mockDocuments: DocumentRow[] = generate()
+
+/** Overall totals shown in the stat cards (design values, not filtered). */
 export const docStats = [
   { key: 'all', label: 'Все', value: 2603, valueColor: 'text-Smart-green', iconBg: 'bg-slate-50' },
   { key: 'signed', label: 'Подписанные', value: 1321, valueColor: 'text-Smart-blue', iconBg: 'bg-emerald-50' },
