@@ -99,7 +99,15 @@ npm run preview  # preview production build
 | `/register`          | Create account (step 1: key + phone) | ✅ done   |
 | `/register/otp`      | OTP step (4-digit + resend timer)    | ✅ done   |
 | `/register/credentials` | Set password (+ confirm, rules)   | ✅ done   |
-| `/login`             | Login (key or pass)                  | ⬜ pending |
+| `/login`             | Login — 3 tabs: ЭЦП / По паролю / USB Токен | ✅ done |
+| `/dashboard`         | App shell / dashboard (placeholder stub)    | 🟡 stub |
+
+Default route `/` → `/login`. Login "Продолжить" → `/dashboard` (stub until the app
+shell design arrives). "Создать аккаунт" → `/register`.
+
+**Note:** design only provided the **ЭЦП** login tab. "По паролю" (login + password) and
+"USB Токен" (token select) tabs were implemented from the documented flow — swap for exact
+Figma when available.
 
 Auth pages share an **AuthLayout**: branded blue background (corner brackets + document
 watermark texture), smartup logo top-left, language selector top-right (Русский /
