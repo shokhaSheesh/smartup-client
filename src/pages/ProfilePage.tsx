@@ -558,7 +558,7 @@ function UsersTab() {
 
   function openNew() {
     setIsNew(true)
-    setEditing({ id: -Date.now(), name: '', role: '', login: '' })
+    setEditing({ id: -Date.now(), name: '', role: '' })
   }
   function openEdit(u: User) {
     setIsNew(false)
