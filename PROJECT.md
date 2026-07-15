@@ -96,10 +96,10 @@ npm run preview  # preview production build
 
 | Route         | Screen                | Status      |
 |---------------|-----------------------|-------------|
-| `/register`   | Create account (step 1: key + phone) | 🟡 building |
-| `/register` … | OTP step              | ⬜ pending  |
-| `/register` … | Set login/password    | ⬜ pending  |
-| `/login`      | Login (key or pass)   | ⬜ pending  |
+| `/register`          | Create account (step 1: key + phone) | ✅ done   |
+| `/register/otp`      | OTP step (4-digit + resend timer)    | ✅ done   |
+| `/register/credentials` | Set login/password                | ⬜ pending |
+| `/login`             | Login (key or pass)                  | ⬜ pending |
 
 Auth pages share an **AuthLayout**: branded blue background (corner brackets + document
 watermark texture), smartup logo top-left, language selector top-right (Русский /
