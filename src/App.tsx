@@ -11,6 +11,7 @@ import CreateDocumentPage from './pages/CreateDocumentPage'
 import DraftsPage from './pages/DraftsPage'
 import ImportExcelPage from './pages/ImportExcelPage'
 import BillingPage from './pages/BillingPage'
+import ProductsPage from './pages/ProductsPage'
 import AddCardPage from './pages/AddCardPage'
 import TopUpBalancePage from './pages/TopUpBalancePage'
 import PlaceholderPage from './pages/PlaceholderPage'
@@ -38,7 +39,7 @@ export default function App() {
           <Route path="/tariffs" element={<BillingPage />} />
           <Route path="/tariffs/add-card" element={<AddCardPage />} />
           <Route path="/tariffs/topup" element={<TopUpBalancePage />} />
-          <Route path="/products" element={<PlaceholderPage title="Товар и услуги" />} />
+          <Route path="/products" element={<ProductsPage />} />
           <Route path="/support" element={<PlaceholderPage title="Support" />} />
           <Route path="/profile" element={<PlaceholderPage title="Профиль" />} />
         </Route>

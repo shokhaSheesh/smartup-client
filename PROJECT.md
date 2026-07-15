@@ -125,7 +125,12 @@ Shared **AppLayout** = dark sidebar (`#28374A`) + white topbar + content area.
 | `/tariffs`               | Биллинг — plans/cards/history/invoices   | ✅ done |
 | `/tariffs/add-card`      | Add card form                            | ✅ done |
 | `/tariffs/topup`         | Top-up balance (payment methods)         | ✅ done |
+| `/products`              | Товар и услуги — classifier table        | ✅ done |
 | other nav routes         | placeholder pages (await designs)        | 🟡 stub |
+
+**Products (`ProductsPage`):** toolbar (search-by-code, search + green Добавить, Очистить),
+table (# / Классификатор коди / названия / Единица измерения / штрих код) with per-row
+delete + pagination; Добавить opens a modal to add a row. Mock in `data/mockProducts.ts`.
 
 **Billing (`BillingPage`):** header (ID, active-until, Пополнить баланс), balance card +
 summary tiles, **current-subscription card** (added — plan badge, renew date, document-usage
