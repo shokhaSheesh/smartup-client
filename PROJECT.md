@@ -157,11 +157,18 @@ with a working file picker (accepts .xls/.xlsx/.csv) → toast.
 line-items table with **add/delete rows + live totals** (qty×price → supply, VAT %, row
 total, Итого). Flag checkboxes (Обратный расчет/Акциз/…). Fields are UI; totals compute.
 
-**Conditional fields (Didox-style):** toggles now reveal fields — Акциз → «Акциз сумма»
-column; Товар маркирован → «Маркировка (KIZ)» column; Есть льгота → «Код льготы» column;
-Лот присутствует → «Номер лота» column; Комиссионер → a «Посредник (Комиссионер)» section.
-Item table columns are config-driven so combinations compose automatically. Modeled from
-the standard ГНК ЭСФ (счёт-фактура) structure + Didox; refine against Didox screenshots.
+**Restructured to match Didox** (счёт-фактура актсиз / Стандарт):
+- Left column: Ваши сведения (ИНН, статус, Комиссионер/Есть льгота/Акциз) · **Организация**
+  (name, VAT reg, account/МФО, bank, address, director/accountant) · **Товар отпустил** (ИНН/ФИО)
+- Right column: Сведения партнёра (ИНН, Односторонний/Лот) · **Предприятие партнёра** (same org fields)
+- **Лот присутствует** → reveals Лот № + Лот типы in the counterparty section (not an items column)
+- Header row2 adds **ТТН ИД** search; items table adds **Склад** column
+- Item toolbar toggles: Обратный расчёт / Акциз / Товар маркирован / Ручное вычисление
+  (**ФАРМ removed**) + «ИКПУ коды» link
+- Conditional item columns: Акциз → Акциз %/сумма; Товар маркирован → Маркировка; Есть льгота → Код льготы
+- Below table: **Доверенность** (select + номер/дата/ПИНФЛ/ФИО) · **Дополнительное поле** (Номер заказа) ·
+  «Показать документ» · «Счёт-фактура с актом» radio · Сохранить/Подписать/Отмена
+Config-driven item columns; still refining exact toggle effects vs Didox.
 
 **Document list** has a toggleable **Фильтр** panel (`DocumentsFilterPanel`): date range,
 type, number, amount range, «Есть льгота» → wired to filtering; Договор/Комиссионер/
