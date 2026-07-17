@@ -11,11 +11,20 @@ import { cn } from '@/lib/cn'
  * `special` = an extra 3rd-column field (label + required).
  * Add new subtypes here as their Didox forms come in.
  */
+const OLD_SF = { label: 'ID старой счёт-фактуры', required: false }
+const OLD_SF_REQ = { label: 'ID старой счёт-фактуры', required: true }
+const IN_SF = { label: 'ID входящей сф', required: true }
+
 const VARIANT_CONFIG: Record<string, { contract: boolean; special?: { label: string; required: boolean } }> = {
   Стандартный: { contract: true },
-  Дополнительный: { contract: false, special: { label: 'ID старой счёт-фактуры', required: true } },
-  Исправленный: { contract: true, special: { label: 'ID старой счёт-фактуры', required: false } },
-  'Возмещение расходов (газ, электроэнергия и др.)': { contract: true, special: { label: 'ID входящей сф', required: true } },
+  Дополнительный: { contract: false, special: OLD_SF_REQ },
+  Исправленный: { contract: true, special: OLD_SF },
+  'Возмещение расходов (газ, электроэнергия и др.)': { contract: true, special: IN_SF },
+  'Дополнительная (возмещение затрат)': { contract: false, special: IN_SF },
+  'Исправленный (возмещение затрат)': { contract: true, special: { label: 'ID входящей сф', required: false } },
+  'Без оплаты': { contract: true },
+  'Исправленный (без оплаты)': { contract: true, special: OLD_SF },
+  'Дополнительный (без оплаты)': { contract: false, special: OLD_SF_REQ },
 }
 const VARIANTS = Object.keys(VARIANT_CONFIG)
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
