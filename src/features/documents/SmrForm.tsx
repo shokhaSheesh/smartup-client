@@ -59,20 +59,14 @@ export default function SmrForm({ docType, onDocType }: { docType: string; onDoc
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
   }
   const sum = (k: keyof Row) => rows.reduce((s, r) => s + (r[k] as number), 0)
-  const totalContract = sum('contractTotal')
-  const nds = totalContract * 0.12
 
   const th = 'border border-gray-300 px-2 py-2 text-center align-middle text-sm font-semibold text-zinc-900'
   const td = 'border border-gray-300 px-1 py-1'
 
-  // Numeric leaf columns in order (keys) with whether they're editable.
-  const numCols: { key: keyof Row; edit: boolean }[] = [
-    { key: 'factTotal', edit: true }, { key: 'factSchedule', edit: true },
-    { key: 'contractTotal', edit: true }, { key: 'contractYear', edit: true },
-    { key: 's10', edit: true }, { key: 's11', edit: false }, { key: 's12', edit: true },
-    { key: 'p13', edit: true }, { key: 'p14', edit: false }, { key: 'p15', edit: true },
-    { key: 'm16', edit: true }, { key: 'm17', edit: false }, { key: 'm18', edit: true },
-  ]
+  // Numeric leaf columns (data-row keys), all editable. Column numbers 6..18.
+  const numCols: (keyof Row)[] = ['factTotal', 'factSchedule', 'contractTotal', 'contractYear', 's10', 's11', 's12', 'p13', 'p14', 'p15', 'm16', 'm17', 'm18']
+  // Monetary columns that get a total in the Итого/НДС/Всего rows.
+  const TOTAL_COLS = new Set([8, 9, 12, 15, 18])
 
   return (
     <div className="flex flex-col gap-4">
@@ -176,11 +170,9 @@ export default function SmrForm({ docType, onDocType }: { docType: string; onDoc
                   <td className={td}><select value={r.workType} onChange={(e) => update(r.id, { workType: e.target.value })} className="w-40 bg-transparent outline-none"><option value="">—</option>{WORK_TYPES.map((s) => <option key={s}>{s}</option>)}</select></td>
                   <td className={td}><select value={r.ikpu} onChange={(e) => update(r.id, { ikpu: e.target.value })} className="w-40 bg-transparent outline-none"><option value="">—</option><option>ИКПУ 001</option><option>ИКПУ 002</option></select></td>
                   <td className={td}><select value={r.unit} onChange={(e) => update(r.id, { unit: e.target.value })} className="w-24 bg-transparent outline-none"><option value="">—</option>{UNITS.map((u) => <option key={u}>{u}</option>)}</select></td>
-                  {numCols.map((c) => (
-                    <td key={c.key} className={cn(td, !c.edit && 'bg-gray-50')}>
-                      {c.edit
-                        ? <input value={(r[c.key] as number) || ''} onChange={(e) => update(r.id, { [c.key]: num(e.target.value) } as Partial<Row>)} className={cn(cellInput, 'w-20')} />
-                        : <span className="block w-20 text-right text-zinc-500">0.00</span>}
+                  {numCols.map((k) => (
+                    <td key={k} className={td}>
+                      <input value={(r[k] as number) || ''} onChange={(e) => update(r.id, { [k]: num(e.target.value) } as Partial<Row>)} className={cn(cellInput, 'w-20')} />
                     </td>
                   ))}
                   <td className={cn(td, 'text-center')}>
@@ -191,11 +183,15 @@ export default function SmrForm({ docType, onDocType }: { docType: string; onDoc
                   </td>
                 </tr>
               ))}
-              {[['Итого:', totalContract], ['Сумма НДС:', nds], ['Всего:', totalContract + nds]].map(([label, val]) => (
-                <tr key={label as string} className="font-semibold">
-                  <td className={cn(td, 'text-right')} colSpan={7}>{label}</td>
-                  <td className={cn(td, 'bg-gray-50 text-right')}>{money(val as number)}</td>
-                  <td className={td} colSpan={11} />
+              {([['Итого:', 1], ['Сумма НДС:', 0.12], ['Всего:', 1.12]] as [string, number][]).map(([label, factor]) => (
+                <tr key={label} className="font-semibold">
+                  <td className={cn(td, 'bg-gray-50 text-right')} colSpan={5}>{label}</td>
+                  {numCols.map((k, i) => {
+                    const colNum = i + 6
+                    const isTotal = TOTAL_COLS.has(colNum)
+                    return <td key={k} className={cn(td, 'bg-gray-50 text-right text-zinc-700')}>{isTotal ? money(sum(k) * factor) : ''}</td>
+                  })}
+                  <td className={cn(td, 'bg-gray-50')} />
                 </tr>
               ))}
             </tbody>
