@@ -28,6 +28,7 @@ const VARIANT_CONFIG: Record<string, { contract: boolean; special?: { label: str
 }
 const VARIANTS = Object.keys(VARIANT_CONFIG)
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
+const DISPENSING = ['Оптовая реализация', 'Розничная реализация', 'Льготный отпуск']
 const VAT_RATES = [-1, 0, 12, 15]
 const vatLabel = (r: number) => (r < 0 ? 'Без НДС' : `${r}%`)
 const LOT_TYPES = [
@@ -55,8 +56,12 @@ type LineItem = {
   description: string
   barcode: string
   marking: string
+  dispensing: string
+  series: string
   unit: string
   qty: number
+  basePrice: number
+  markup: number
   price: number
   exciseRate: number
   vat: number
@@ -69,7 +74,7 @@ type LineItem = {
 
 let nextId = 2
 function emptyItem(): LineItem {
-  return { id: nextId++, ikpu: '', description: '', barcode: '', marking: '', unit: 'Штук', qty: 0, price: 0, exciseRate: 0, vat: 12, lgota: '', warehouse: '', manualSupply: 0, manualVat: 0, manualTotal: 0 }
+  return { id: nextId++, ikpu: '', description: '', barcode: '', marking: '', dispensing: '', series: '', unit: 'Штук', qty: 0, basePrice: 0, markup: 0, price: 0, exciseRate: 0, vat: 12, lgota: '', warehouse: '', manualSupply: 0, manualVat: 0, manualTotal: 0 }
 }
 
 const field =
@@ -207,6 +212,7 @@ export default function CreateDocumentPage() {
   const vcfg = VARIANT_CONFIG[variant] ?? { contract: true }
   const showContract = vcfg.contract
   const special = vcfg.special
+  const isFarm = docType === 'Счет-фактура (ФАРМ)'
   const [showErrors, setShowErrors] = useState(false)
   const itemErr = (v: string) => showErrors && !String(v).trim()
 
@@ -254,8 +260,12 @@ export default function CreateDocumentPage() {
           </button>
         ),
       },
+      { key: 'dispensing', header: 'Отпуск лекарственных средств *', show: isFarm, cell: (it) => <select value={it.dispensing} onChange={(e) => updateItem(it.id, { dispensing: e.target.value })} className={cn(cellInput, 'w-40', !it.dispensing && 'text-gray-400')}><option value="">Выберите</option>{DISPENSING.map((d) => <option key={d}>{d}</option>)}</select> },
+      { key: 'series', header: 'Серия', show: isFarm, cell: (it) => <input value={it.series} onChange={(e) => updateItem(it.id, { series: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
       { key: 'unit', header: 'Ед. измер. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
       { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
+      { key: 'basePrice', header: 'Базовая цена', show: isFarm, cell: (it) => <input value={it.basePrice || ''} onChange={(e) => updateItem(it.id, { basePrice: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
+      { key: 'markup', header: 'Наценка, %', show: isFarm, cell: (it) => <input value={it.markup || ''} onChange={(e) => updateItem(it.id, { markup: num(e.target.value) })} className={cn(cellInput, 'w-16 text-right')} /> },
       { key: 'price', header: 'Цена *', cls: (it: LineItem) => (showErrors && !it.price ? 'bg-red-50 text-right' : 'text-right'), cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
       {
         key: 'exciseRate', show: showExcise,
@@ -333,7 +343,7 @@ export default function CreateDocumentPage() {
             <div className="flex flex-wrap items-center gap-6">
               <Dot checked={flags.komissioner} onChange={() => toggle('komissioner')}>Комиссионер (Доверенное лицо)</Dot>
               <Dot checked={flags.lgota} onChange={toggleLgota}>Есть льгота</Dot>
-              <Dot checked={flags.excise} onChange={() => toggle('excise')}>Акциз</Dot>
+              {!isFarm && <Dot checked={flags.excise} onChange={() => toggle('excise')}>Акциз</Dot>}
             </div>
           </Card>
 
@@ -400,7 +410,7 @@ export default function CreateDocumentPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-6 py-4">
           <div className="flex flex-wrap items-center gap-6">
             <Dot checked={flags.reverse} onChange={() => toggle('reverse')}>Обратный расчёт</Dot>
-            <Dot checked={flags.excise} onChange={() => toggle('excise')}>Акциз</Dot>
+            {!isFarm && <Dot checked={flags.excise} onChange={() => toggle('excise')}>Акциз</Dot>}
             <Dot checked={flags.marked} onChange={() => toggle('marked')}>Товар маркирован</Dot>
             <Dot checked={flags.manual} onChange={() => toggle('manual')}>Ручное вычисление</Dot>
             {flags.marked && (
