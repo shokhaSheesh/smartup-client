@@ -8,7 +8,8 @@ import { cn } from '@/lib/cn'
 
 const VARIANTS = ['Стандартный', 'Дополнительный', 'Исправленный']
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
-const VAT_RATES = [0, 12, 15]
+const VAT_RATES = [-1, 0, 12, 15]
+const vatLabel = (r: number) => (r < 0 ? 'Без НДС' : `${r}%`)
 const LOT_TYPES = [
   'cooperation.uz (CPR-)',
   'E-Birja (E-BIRJA-)',
@@ -130,6 +131,12 @@ export default function CreateDocumentPage() {
     manual: false,
   })
   const toggle = (k: keyof typeof flags) => setFlags((f) => ({ ...f, [k]: !f[k] }))
+  function toggleLgota() {
+    const turningOn = !flags.lgota
+    setFlags((f) => ({ ...f, lgota: turningOn }))
+    // Есть льгота → НДС becomes «Без НДС» (like Didox)
+    setItems((prev) => prev.map((it) => ({ ...it, vat: turningOn ? -1 : 12 })))
+  }
 
   const [exciseMode, setExciseMode] = useState<'percent' | 'sum'>('percent')
   const [items, setItems] = useState<LineItem[]>([emptyItem()])
@@ -143,6 +150,7 @@ export default function CreateDocumentPage() {
   const showMarking = flags.marked
   const showLgota = flags.lgota
   const manual = flags.manual
+  const isAmendment = variant !== 'Стандартный'
 
   function updateItem(id: number, patch: Partial<LineItem>) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)))
@@ -153,7 +161,7 @@ export default function CreateDocumentPage() {
 
   const rowSupply = (it: LineItem) => (manual ? it.manualSupply : it.qty * it.price)
   const rowExcise = (it: LineItem) => (!showExcise ? 0 : exciseMode === 'percent' ? (rowSupply(it) * it.exciseRate) / 100 : it.exciseRate)
-  const rowVat = (it: LineItem) => (manual ? it.manualVat : (rowSupply(it) * it.vat) / 100)
+  const rowVat = (it: LineItem) => (manual ? it.manualVat : it.vat > 0 ? (rowSupply(it) * it.vat) / 100 : 0)
   const rowTotal = (it: LineItem) => (manual ? it.manualTotal : rowSupply(it) + rowExcise(it) + rowVat(it))
   const totalSupply = items.reduce((s, it) => s + rowSupply(it), 0)
   const grandTotal = items.reduce((s, it) => s + rowTotal(it), 0)
@@ -177,9 +185,9 @@ export default function CreateDocumentPage() {
   const cols: Col[] = (
     [
       { key: 'num', header: '№', cls: 'text-center text-zinc-700', cell: (_it, i) => i + 1 },
-      { key: 'ikpu', header: 'ИКПУ и наименование товара/услуги *', cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-56')} /> },
-      { key: 'description', header: 'Описание товара/услуги *', cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className={cn(cellInput, 'w-40')} /> },
-      { key: 'barcode', header: 'Штрих код', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
+      { key: 'ikpu', header: 'ИКПУ и наименование товаров (работ, услуг) *', cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-56')} /> },
+      { key: 'description', header: 'Описание товаров (работ, услуг) *', cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className={cn(cellInput, 'w-40')} /> },
+      { key: 'barcode', header: 'Штрих код товара/услуги', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
       {
         key: 'marking', header: 'Маркировка', show: showMarking, cell: (it) => (
           <button onClick={() => openMarking(it.id)} className="flex items-center gap-1.5 text-left text-slate-600">
@@ -188,7 +196,7 @@ export default function CreateDocumentPage() {
           </button>
         ),
       },
-      { key: 'unit', header: 'Ед. изм. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
+      { key: 'unit', header: 'Ед. измер. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
       { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
       { key: 'price', header: 'Цена *', cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
       {
@@ -209,16 +217,16 @@ export default function CreateDocumentPage() {
         key: 'supply', header: 'Стоимость поставки *', cls: 'text-right text-zinc-700',
         cell: (it) => manual ? <input value={it.manualSupply || ''} onChange={(e) => updateItem(it.id, { manualSupply: num(e.target.value) })} className={cn(cellInput, 'w-28 text-right')} /> : money(rowSupply(it)),
       },
-      { key: 'vat', header: 'НДС, %', cell: (it) => <select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} className={cellInput}>{VAT_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}</select> },
+      { key: 'vat', header: 'Ндс, %', cell: (it) => <select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} className={cellInput}>{VAT_RATES.map((r) => <option key={r} value={r}>{vatLabel(r)}</option>)}</select> },
       {
-        key: 'vatsum', header: 'НДС, сумма *', cls: 'text-right text-zinc-700',
+        key: 'vatsum', header: 'Ндс, Сумма *', cls: 'text-right text-zinc-700',
         cell: (it) => manual ? <input value={it.manualVat || ''} onChange={(e) => updateItem(it.id, { manualVat: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> : money(rowVat(it)),
       },
       {
         key: 'total', header: 'Всего *', cls: 'text-right font-medium text-zinc-900',
         cell: (it) => manual ? <input value={it.manualTotal || ''} onChange={(e) => updateItem(it.id, { manualTotal: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> : money(rowTotal(it)),
       },
-      { key: 'lgota', header: 'Имтиёз (льгота)', show: showLgota, cell: (it) => <input value={it.lgota} onChange={(e) => updateItem(it.id, { lgota: e.target.value })} placeholder="Код льготы" className={cn(cellInput, 'w-32')} /> },
+      { key: 'lgota', header: 'Льгота', show: showLgota, cell: (it) => <input value={it.lgota} onChange={(e) => updateItem(it.id, { lgota: e.target.value })} placeholder="Код льготы" className={cn(cellInput, 'w-32')} /> },
       { key: 'warehouse', header: 'Склад', cell: (it) => <input value={it.warehouse} onChange={(e) => updateItem(it.id, { warehouse: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
       { key: 'actions', header: '', cls: 'text-center', cell: (it) => (
         <button onClick={() => removeItem(it.id)} className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-red-500 transition hover:bg-red-50" aria-label="Удалить">
@@ -241,13 +249,14 @@ export default function CreateDocumentPage() {
         <div className="grid grid-cols-1 gap-4 p-6 lg:grid-cols-3">
           <div className="flex flex-col gap-4">
             <input className={field} placeholder="Номер счёт-фактуры *" />
-            <input className={field} placeholder="Номер контракта *" />
+            {!isAmendment && <input className={field} placeholder="Номер контракта *" />}
           </div>
           <div className="flex flex-col gap-4">
             <input type="date" className={field} placeholder="Дата документа *" />
-            <input type="date" className={field} placeholder="Дата контракта *" />
+            {!isAmendment && <input type="date" className={field} placeholder="Дата контракта *" />}
           </div>
           <div className="flex flex-col gap-4">
+            {isAmendment && <input className={field} placeholder="ID старой счёт-фактуры *" />}
             <div className="relative">
               <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-400" />
               <input className={cn(field, 'pl-10')} placeholder="ID договора" />
@@ -271,7 +280,7 @@ export default function CreateDocumentPage() {
             </div>
             <div className="flex flex-wrap items-center gap-6">
               <Dot checked={flags.komissioner} onChange={() => toggle('komissioner')}>Комиссионер (Доверенное лицо)</Dot>
-              <Dot checked={flags.lgota} onChange={() => toggle('lgota')}>Есть льгота</Dot>
+              <Dot checked={flags.lgota} onChange={toggleLgota}>Есть льгота</Dot>
               <Dot checked={flags.excise} onChange={() => toggle('excise')}>Акциз</Dot>
             </div>
           </Card>
@@ -286,7 +295,7 @@ export default function CreateDocumentPage() {
             </Card>
           )}
 
-          <Card title="Организация"><OrgFields own /></Card>
+          <Card title="Компания"><OrgFields own /></Card>
 
           <Card title="Товар отпустил">
             <div className="grid grid-cols-2 gap-4">
@@ -333,7 +342,7 @@ export default function CreateDocumentPage() {
             )}
           </Card>
 
-          <Card title="Предприятие партнёра"><OrgFields own={false} disabled={flags.odnostoronniy} /></Card>
+          <Card title="Компания партнёра"><OrgFields own={false} disabled={flags.odnostoronniy} /></Card>
         </div>
       </div>
 
@@ -352,7 +361,7 @@ export default function CreateDocumentPage() {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-1.5 text-sm font-medium text-Smart-blue">ИКПУ коды <ArrowUpRight className="size-4" /></button>
+            <button className="flex items-center gap-1.5 text-sm font-medium text-Smart-blue">Коды ИКПУ <ArrowUpRight className="size-4" /></button>
             <button onClick={() => setItems((prev) => [...prev, emptyItem()])} className="flex items-center gap-2 rounded-md bg-blue-800 px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110">
               <Plus className="size-5" /> Добавить
             </button>
