@@ -54,6 +54,8 @@ export default function SmrForm({ docType, onDocType }: { docType: string; onDoc
   const navigate = useNavigate()
   const [variant, setVariant] = useState(SMR_VARIANTS[0])
   const [rows, setRows] = useState<Row[]>([emptyRow()])
+  const showContract = variant !== 'Дополнительный'
+  const showOldId = variant !== 'Стандартный'
 
   function update(id: number, patch: Partial<Row>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
@@ -77,11 +79,12 @@ export default function SmrForm({ docType, onDocType }: { docType: string; onDoc
           <PillSelect options={[...DOC_TYPES]} value={docType} onChange={onDocType} />
           <PillSelect options={SMR_VARIANTS} value={variant} onChange={setVariant} />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-2xl">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:max-w-4xl">
           <LF label="Номер счёт-фактуры" />
           <LF label="Дата документа" required date />
-          <LF label="Номер контракта" />
-          <LF label="Дата контракта" required date />
+          {showOldId ? <LF label="ID старого ССФ" required /> : <div className="hidden sm:block" />}
+          {showContract && <LF label="Номер контракта" />}
+          {showContract && <LF label="Дата контракта" required date />}
         </div>
       </Card>
 
