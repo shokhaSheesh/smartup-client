@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Plus, Trash2, Check, HelpCircle, Info } from 'lucide-react'
+import { ChevronDown, Plus, Trash2, Check, HelpCircle } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
@@ -10,6 +10,7 @@ const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
 const VAT_RATES = [-1, 0, 12, 15]
 const vatLabel = (r: number) => (r < 0 ? 'Без НДС' : `${r}%`)
 const ORIGIN = ['Отечественный товар', 'Импортный товар', 'Товар из СЭЗ']
+const DISPENSING = ['Оптовая реализация', 'Розничная реализация', 'Льготный отпуск']
 
 const cellInput = 'bg-transparent outline-none'
 
@@ -71,12 +72,13 @@ type LineItem = {
   id: number
   komInn: string; komName: string; komVat: string
   ikpu: string; description: string; barcode: string; marking: string
+  dispensing: string; series: string; basePrice: number; markup: number
   unit: string; qty: number; price: number; exciseRate: number
   vat: number; lgota: string; warehouse: string; origin: string
 }
 let nextId = 2
 function emptyItem(): LineItem {
-  return { id: nextId++, komInn: '', komName: '', komVat: '', ikpu: '', description: '', barcode: '', marking: '', unit: 'Штук', qty: 0, price: 0, exciseRate: 0, vat: -1, lgota: '', warehouse: '', origin: '' }
+  return { id: nextId++, komInn: '', komName: '', komVat: '', ikpu: '', description: '', barcode: '', marking: '', dispensing: '', series: '', basePrice: 0, markup: 0, unit: 'Штук', qty: 0, price: 0, exciseRate: 0, vat: -1, lgota: '', warehouse: '', origin: '' }
 }
 
 export default function HybridForm({ docType, onDocType }: { docType: string; onDocType: (v: string) => void }) {
@@ -93,6 +95,7 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
   const [items, setItems] = useState<LineItem[]>([emptyItem()])
 
   const isAmendment = variant !== 'Стандартный'
+  const isFarm = docType === 'Гибридная счет-фактура (ФАРМ)'
 
   function updateItem(id: number, patch: Partial<LineItem>) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)))
@@ -114,9 +117,13 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
     { key: 'ikpu', header: 'ИКПУ и наименование товаров *', cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-48')} /> },
     { key: 'description', header: 'Описание товаров *', cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} className={cn(cellInput, 'w-36')} /> },
     { key: 'barcode', header: 'Штрих код товара/услуги', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
+    { key: 'dispensing', header: 'Отпуск лекарственных средств *', show: isFarm, cell: (it) => <select value={it.dispensing} onChange={(e) => updateItem(it.id, { dispensing: e.target.value })} className={cn(cellInput, 'w-40', !it.dispensing && 'text-gray-400')}><option value="">Выберите</option>{DISPENSING.map((d) => <option key={d}>{d}</option>)}</select> },
+    { key: 'series', header: 'Серия', show: isFarm, cell: (it) => <input value={it.series} onChange={(e) => updateItem(it.id, { series: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
     { key: 'marking', header: 'Маркировка', show: flags.marked, cell: (it) => <input value={it.marking} onChange={(e) => updateItem(it.id, { marking: e.target.value })} placeholder="KIZ" className={cn(cellInput, 'w-28')} /> },
     { key: 'unit', header: 'Ед. изм. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
     { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
+    { key: 'basePrice', header: 'Базовая цена', show: isFarm, cell: (it) => <input value={it.basePrice || ''} onChange={(e) => updateItem(it.id, { basePrice: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
+    { key: 'markup', header: 'Наценка, %', show: isFarm, cell: (it) => <input value={it.markup || ''} onChange={(e) => updateItem(it.id, { markup: num(e.target.value) })} className={cn(cellInput, 'w-16 text-right')} /> },
     { key: 'price', header: 'Цена *', cls: 'text-right', cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
     {
       key: 'exciseRate', show: flags.excise,
@@ -167,7 +174,7 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
             <div className="flex flex-wrap items-center gap-6 py-1">
               <CheckBox checked={flags.komissioner} onChange={() => toggle('komissioner')}>Комиссионер</CheckBox>
               <CheckBox checked={flags.lgota} onChange={() => toggle('lgota')}>Есть льгота</CheckBox>
-              <CheckBox checked={flags.excise} onChange={() => toggle('excise')}>Акциз</CheckBox>
+              {!isFarm && <CheckBox checked={flags.excise} onChange={() => toggle('excise')}>Акциз</CheckBox>}
             </div>
             <LF label="Наименование компании" required value='"UDEVS" MCHJ' />
             <LF label="Регистрационный код плательщика НДС" value="326090125584" />
@@ -215,16 +222,6 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
 
       {/* Тип транспорта */}
       <Card title="Тип транспорта" help>
-        <div className="mb-4 flex items-start gap-3 rounded-lg bg-sky-50 px-4 py-3 text-sm text-slate-600">
-          <Info className="mt-0.5 size-5 shrink-0 text-Smart-blue" />
-          <div>
-            <span className="font-medium text-Smart-blue">Изменение</span>
-            <ol className="ml-4 list-decimal">
-              <li>Теперь номер автомобиля вводится вручную</li>
-              <li>При создании ЭТТН номера транспортных средств автоматически сохраняются и доступны из списка</li>
-            </ol>
-          </div>
-        </div>
         <div className="flex flex-wrap items-center gap-6">
           <Radio checked onChange={() => {}}>Автомобиль</Radio>
           <Radio checked={false} onChange={() => {}} disabled>Воздушный</Radio>
@@ -235,16 +232,30 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <LF label="Гос. номер автомобиля" required />
           <LF label="Модель авто" required />
-          <LF label="Гос. номер полуприцепа" />
-          <LF label="Модель авто" />
+          <LF label="Гос. номер полуприцепа" disabled={!semi} />
+          <LF label="Модель авто" disabled={!semi} />
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          <CheckBox checked={otherOwners} onChange={() => setOtherOwners(!otherOwners)}>Другие владельцы</CheckBox>
-          <CheckBox checked={trailer} onChange={() => setTrailer(!trailer)}>Прицеп</CheckBox>
-        </div>
-        <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {otherOwners && <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" /><LF label="Название" /></div>}
-          {trailer && <div className="grid grid-cols-2 gap-3"><LF label="Гос. номер прицепа" /><LF label="Модель авто" /></div>}
+        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Другие владельцы — revealed when checked */}
+          <div>
+            <CheckBox checked={otherOwners} onChange={() => setOtherOwners(!otherOwners)}>Другие владельцы</CheckBox>
+            {otherOwners && (
+              <div className="mt-3 flex items-end gap-2">
+                <div className="grid flex-1 grid-cols-2 gap-2"><LF label="ИНН/ПИНФЛ" /><LF label="Название" /></div>
+                <button className="flex size-10 shrink-0 items-center justify-center rounded-md bg-yellow-400 text-white"><Plus className="size-5" /></button>
+                <button className="flex size-10 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"><Trash2 className="size-5" /></button>
+              </div>
+            )}
+          </div>
+          {/* Прицеп — always shown, disabled until checked */}
+          <div>
+            <CheckBox checked={trailer} onChange={() => setTrailer(!trailer)}>Прицеп</CheckBox>
+            <div className="mt-3 flex items-end gap-2">
+              <div className="grid flex-1 grid-cols-2 gap-2"><LF label="Гос. номер прицепа" disabled={!trailer} /><LF label="Модель авто" disabled={!trailer} /></div>
+              <button disabled={!trailer} className={cn('flex size-10 shrink-0 items-center justify-center rounded-md text-white', trailer ? 'bg-yellow-400' : 'bg-yellow-200')}><Plus className="size-5" /></button>
+              <button disabled={!trailer} className="flex size-10 shrink-0 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"><Trash2 className="size-5" /></button>
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -282,7 +293,7 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-6 py-4">
           <div className="flex flex-wrap items-center gap-6">
             <CheckBox checked={flags.reverse} onChange={() => toggle('reverse')}>Обратный расчёт</CheckBox>
-            <CheckBox checked={flags.excise} onChange={() => toggle('excise')}>Акциз</CheckBox>
+            {!isFarm && <CheckBox checked={flags.excise} onChange={() => toggle('excise')}>Акциз</CheckBox>}
             <CheckBox checked={flags.marked} onChange={() => toggle('marked')}>Товар маркирован</CheckBox>
             <CheckBox checked={flags.manual} onChange={() => toggle('manual')}>Ручной расчёт</CheckBox>
           </div>

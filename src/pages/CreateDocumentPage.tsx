@@ -232,7 +232,7 @@ export default function CreateDocumentPage() {
   if (docType === 'Товарно-транспортная накладная') {
     return <TtnForm docType={docType} onDocType={setDocType} />
   }
-  if (docType === 'Гибридная счет-фактура') {
+  if (docType === 'Гибридная счет-фактура' || docType === 'Гибридная счет-фактура (ФАРМ)') {
     return <HybridForm docType={docType} onDocType={setDocType} />
   }
 
