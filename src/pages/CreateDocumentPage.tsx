@@ -192,9 +192,6 @@ export default function CreateDocumentPage() {
               <input className={field} placeholder="Название" />
               <ChevronDown className="pointer-events-none absolute right-3 top-3 size-5 text-gray-400" />
             </div>
-            <button className="flex items-center justify-center gap-2 rounded-md bg-slate-50 px-4 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-slate-100">
-              Детали <ChevronDown className="size-4" />
-            </button>
           </Card>
 
           {yourFlags.komissioner && (
@@ -225,7 +222,10 @@ export default function CreateDocumentPage() {
 
         <Card title="Сведения партнера">
           <div className="flex items-stretch">
-            <input className={cn(field, 'rounded-r-none')} placeholder="ИНН / ПИНФЛ" />
+            <input
+              className={cn(field, 'rounded-r-none')}
+              placeholder={partnerFlags.odnostoronniy ? 'ИНН / ПИНФЛ (необязательно)' : 'ИНН / ПИНФЛ *'}
+            />
             <button className="flex items-center justify-center rounded-r-lg bg-Smart-blue px-3.5 text-white">
               <Search className="size-5" />
             </button>
@@ -241,8 +241,28 @@ export default function CreateDocumentPage() {
               Лот присутствует
             </CheckBox>
           </div>
+
+          {partnerFlags.odnostoronniy && (
+            <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              Односторонний документ — подпись контрагента не требуется.
+            </div>
+          )}
+
           <input className={field} placeholder="Название" />
           <input className={field} placeholder="Регистрационный код плательщика НДС" />
+
+          {partnerFlags.poruchitel && (
+            <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <span className="text-sm font-semibold text-slate-700">Поручитель</span>
+              <div className="flex items-stretch">
+                <input className={cn(field, 'rounded-r-none')} placeholder="ИНН / ПИНФЛ поручителя" />
+                <button className="flex items-center justify-center rounded-r-lg bg-Smart-blue px-3.5 text-white">
+                  <Search className="size-5" />
+                </button>
+              </div>
+              <input className={field} placeholder="Наименование поручителя" />
+            </div>
+          )}
           <div className="flex gap-3">
             <input className={field} placeholder="Коэффициент разрыва при уплате НДС (по всей цепочке)" />
             <input className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-Smart-blue" />
