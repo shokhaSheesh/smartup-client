@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronDown, Plus, Trash2, Pencil, ArrowUpRight } from 'lucide-react'
+import { Search, ChevronDown, Plus, Minus, Trash2, Pencil, ArrowUpRight } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
 import { Modal } from '@/components/ui/Modal'
 import { DOC_TYPES } from '@/data/docTypes'
@@ -29,6 +29,7 @@ const VARIANT_CONFIG: Record<string, { contract: boolean; special?: { label: str
 const VARIANTS = Object.keys(VARIANT_CONFIG)
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
 const DISPENSING = ['Оптовая реализация', 'Розничная реализация', 'Льготный отпуск']
+const ORIGIN = ['Отечественный товар', 'Импортный товар', 'Товар из СЭЗ']
 const VAT_RATES = [-1, 0, 12, 15]
 const vatLabel = (r: number) => (r < 0 ? 'Без НДС' : `${r}%`)
 const LOT_TYPES = [
@@ -62,6 +63,7 @@ type LineItem = {
   qty: number
   basePrice: number
   markup: number
+  origin: string
   price: number
   exciseRate: number
   vat: number
@@ -74,7 +76,7 @@ type LineItem = {
 
 let nextId = 2
 function emptyItem(): LineItem {
-  return { id: nextId++, ikpu: '', description: '', barcode: '', marking: '', dispensing: '', series: '', unit: 'Штук', qty: 0, basePrice: 0, markup: 0, price: 0, exciseRate: 0, vat: 12, lgota: '', warehouse: '', manualSupply: 0, manualVat: 0, manualTotal: 0 }
+  return { id: nextId++, ikpu: '', description: '', barcode: '', marking: '', dispensing: '', series: '', unit: 'Штук', qty: 0, basePrice: 0, markup: 0, origin: '', price: 0, exciseRate: 0, vat: 12, lgota: '', warehouse: '', manualSupply: 0, manualVat: 0, manualTotal: 0 }
 }
 
 const field =
@@ -252,15 +254,15 @@ export default function CreateDocumentPage() {
       { key: 'ikpu', header: 'ИКПУ и наименование товаров (работ, услуг) *', cls: (it: LineItem) => itemErr(it.ikpu) ? 'bg-red-50' : undefined, cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-56')} /> },
       { key: 'description', header: 'Описание товаров (работ, услуг) *', cls: (it: LineItem) => itemErr(it.description) ? 'bg-red-50' : undefined, cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className={cn(cellInput, 'w-40')} /> },
       { key: 'barcode', header: 'Штрих код товара/услуги', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
+      { key: 'dispensing', header: 'Отпуск лекарственных средств *', show: isFarm, cell: (it) => <select value={it.dispensing} onChange={(e) => updateItem(it.id, { dispensing: e.target.value })} className={cn(cellInput, 'w-40', !it.dispensing && 'text-gray-400')}><option value="">Выберите</option>{DISPENSING.map((d) => <option key={d}>{d}</option>)}</select> },
       {
         key: 'marking', header: 'Маркировка', show: showMarking, cell: (it) => (
           <button onClick={() => openMarking(it.id)} className="flex items-center gap-1.5 text-left text-slate-600">
-            <span className={it.marking ? 'text-Smart-green' : 'text-gray-500'}>{it.marking ? 'Маркировано' : 'Маркировкаланмаган'}</span>
+            <span className={it.marking ? 'text-Smart-green' : 'text-gray-500'}>{it.marking ? 'Маркирован' : 'Не маркирован'}</span>
             <Pencil className="size-3.5 text-Smart-blue" />
           </button>
         ),
       },
-      { key: 'dispensing', header: 'Отпуск лекарственных средств *', show: isFarm, cell: (it) => <select value={it.dispensing} onChange={(e) => updateItem(it.id, { dispensing: e.target.value })} className={cn(cellInput, 'w-40', !it.dispensing && 'text-gray-400')}><option value="">Выберите</option>{DISPENSING.map((d) => <option key={d}>{d}</option>)}</select> },
       { key: 'series', header: 'Серия', show: isFarm, cell: (it) => <input value={it.series} onChange={(e) => updateItem(it.id, { series: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
       { key: 'unit', header: 'Ед. измер. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
       { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
@@ -296,10 +298,16 @@ export default function CreateDocumentPage() {
       },
       { key: 'lgota', header: 'Льгота', show: showLgota, cell: (it) => <input value={it.lgota} onChange={(e) => updateItem(it.id, { lgota: e.target.value })} placeholder="Код льготы" className={cn(cellInput, 'w-32')} /> },
       { key: 'warehouse', header: 'Склад', cell: (it) => <input value={it.warehouse} onChange={(e) => updateItem(it.id, { warehouse: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
+      { key: 'origin', header: 'Происхождение товара *', show: flags.lot, cell: (it) => <select value={it.origin} onChange={(e) => updateItem(it.id, { origin: e.target.value })} className={cn(cellInput, 'w-40', !it.origin && 'text-gray-400')}><option value="">Выберите</option>{ORIGIN.map((o) => <option key={o}>{o}</option>)}</select> },
       { key: 'actions', header: '', cls: 'text-center', cell: (it) => (
-        <button onClick={() => removeItem(it.id)} className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-red-500 transition hover:bg-red-50" aria-label="Удалить">
-          <Trash2 className="size-4" />
-        </button>
+        <div className="flex items-center justify-center gap-1">
+          <button onClick={() => removeItem(it.id)} className="flex size-7 items-center justify-center rounded-full border border-red-200 text-red-500 transition hover:bg-red-50" aria-label="Удалить строку">
+            <Minus className="size-4" />
+          </button>
+          <button onClick={() => setItems((prev) => [...prev, emptyItem()])} className="flex size-7 items-center justify-center rounded-full border border-green-200 text-Smart-green transition hover:bg-green-50" aria-label="Добавить строку">
+            <Plus className="size-4" />
+          </button>
+        </div>
       ) },
     ] as Col[]
   ).filter((c) => c.show !== false)
