@@ -184,7 +184,13 @@ export default function CreateDocumentPage() {
   const showMarking = flags.marked
   const showLgota = flags.lgota
   const manual = flags.manual
-  const isAmendment = variant !== 'Стандартный'
+  // Header layout by variant:
+  //  Стандартный   → contract fields, no old-invoice id
+  //  Дополнительный → old-invoice id (required), no contract fields
+  //  Исправленный  → contract fields + old-invoice id
+  const showOldInvoice = variant === 'Дополнительный' || variant === 'Исправленный'
+  const oldInvoiceRequired = variant === 'Дополнительный'
+  const showContract = variant !== 'Дополнительный'
   const [showErrors, setShowErrors] = useState(false)
   const itemErr = (v: string) => showErrors && !String(v).trim()
 
@@ -285,14 +291,14 @@ export default function CreateDocumentPage() {
         <div className="grid grid-cols-1 gap-4 p-6 lg:grid-cols-3">
           <div className="flex flex-col gap-4">
             <Req placeholder="Номер счёт-фактуры *" required showErrors={showErrors} />
-            {!isAmendment && <Req placeholder="Номер контракта *" required showErrors={showErrors} />}
+            {showContract && <Req placeholder="Номер контракта *" required showErrors={showErrors} />}
           </div>
           <div className="flex flex-col gap-4">
             <Req placeholder="Дата документа *" date required showErrors={showErrors} />
-            {!isAmendment && <Req placeholder="Дата контракта *" date required showErrors={showErrors} />}
+            {showContract && <Req placeholder="Дата контракта *" date required showErrors={showErrors} />}
           </div>
           <div className="flex flex-col gap-4">
-            {isAmendment && <Req placeholder="ID старой счёт-фактуры *" required showErrors={showErrors} />}
+            {showOldInvoice && <Req placeholder={`ID старой счёт-фактуры${oldInvoiceRequired ? ' *' : ''}`} required={oldInvoiceRequired} showErrors={showErrors} />}
             <Req placeholder="ID договора" search />
             <Req placeholder="ТТН ИД" search />
           </div>
