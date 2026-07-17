@@ -9,7 +9,24 @@ import { cn } from '@/lib/cn'
 const VARIANTS = ['Стандартный', 'Дополнительный', 'Исправленный']
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
 const VAT_RATES = [0, 12, 15]
-const LOT_TYPES = ['Лот тип 1', 'Лот тип 2', 'Лот тип 3']
+const LOT_TYPES = [
+  'cooperation.uz (CPR-)',
+  'E-Birja (E-BIRJA-)',
+  'Shaffof qurilish (SHAFFOF-)',
+  'xt-xarid.uz (XT-)',
+  'Давлат харидлар, Тендер (DX-T-)',
+  'Давлат харидлар, Энг яхши таклиф (DX-O-)',
+  'Давлат харидлар, Тўғридан-тўғри (DX-R-)',
+]
+const ONESIDED_TYPES = [
+  'Физическому лицу',
+  'Экспорт услуг (за пределами Республики Узбекистан)',
+  'Импорт услуг',
+  'Финансовые услуги',
+  'Реализация ниже рыночной цены',
+  'Реализация ниже таможенной цены',
+  'Экспорт товаров и услуг (на территории РУз)',
+]
 
 type LineItem = {
   id: number
@@ -38,14 +55,14 @@ const field =
   'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
 const cellInput = 'bg-transparent outline-none'
 
-function Fld({ label, value, required, dropdown, date }: { label: string; value?: string; required?: boolean; dropdown?: boolean; date?: boolean }) {
+function Fld({ label, value, required, dropdown, date, disabled }: { label: string; value?: string; required?: boolean; dropdown?: boolean; date?: boolean; disabled?: boolean }) {
   return (
-    <div className="relative flex flex-col rounded-lg border border-gray-300 bg-white px-3.5 py-1.5">
+    <div className={cn('relative flex flex-col rounded-lg border px-3.5 py-1.5', disabled ? 'border-gray-200 bg-gray-50' : 'border-gray-300 bg-white')}>
       <span className="text-xs text-gray-500">
         {required && <span className="text-red-500">*</span>}
         {label}
       </span>
-      <input defaultValue={value} type={date ? 'date' : 'text'} className="w-full bg-transparent text-sm text-slate-800 outline-none" />
+      <input disabled={disabled} defaultValue={value} type={date ? 'date' : 'text'} className={cn('w-full bg-transparent text-sm outline-none', disabled ? 'text-gray-400' : 'text-slate-800')} />
       {dropdown && <ChevronDown className="pointer-events-none absolute right-3 top-4 size-4 text-gray-400" />}
     </div>
   )
@@ -78,20 +95,20 @@ function money(n: number): string {
   return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function OrgFields({ own }: { own: boolean }) {
+function OrgFields({ own, disabled }: { own: boolean; disabled?: boolean }) {
   return (
     <>
-      <Fld label="Наименование" required value={own ? '"UDEVS" MCHJ' : undefined} />
-      <Fld label="Регистрационный код плательщика НДС" value={own ? '326090125584' : undefined} />
+      <Fld label="Наименование" required disabled={disabled} value={own ? '"UDEVS" MCHJ' : undefined} />
+      <Fld label="Регистрационный код плательщика НДС" disabled={disabled} value={own ? '326090125584' : undefined} />
       <div className="grid grid-cols-2 gap-4">
-        <Fld label="Расчётный счёт" dropdown value={own ? '20208000505191969001' : undefined} />
-        <Fld label="МФО, SWIFT и др." dropdown value={own ? '01095' : undefined} />
+        <Fld label="Расчётный счёт" dropdown disabled={disabled} value={own ? '20208000505191969001' : undefined} />
+        <Fld label="МФО, SWIFT и др." dropdown disabled={disabled} value={own ? '01095' : undefined} />
       </div>
-      <Fld label="Наименование банка" value={own ? 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK" АТ БАНКИ' : undefined} />
-      <Fld label="Адрес" required value={own ? 'ТОШКЕНТ ШАҲАР ОЛМАЗОР ТУМАНИ Yangi Olmazor ko\'chasi' : undefined} />
+      <Fld label="Наименование банка" disabled={disabled} value={own ? 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK" АТ БАНКИ' : undefined} />
+      <Fld label="Адрес" required disabled={disabled} value={own ? 'ТОШКЕНТ ШАҲАР ОЛМАЗОР ТУМАНИ Yangi Olmazor ko\'chasi' : undefined} />
       <div className="grid grid-cols-2 gap-4">
-        <Fld label="Директор" value={own ? 'BAXODIROV AZIZBEK' : undefined} />
-        <Fld label="Глав. бух." />
+        <Fld label="Директор" disabled={disabled} value={own ? 'BAXODIROV AZIZBEK' : undefined} />
+        <Fld label="Глав. бух." disabled={disabled} />
       </div>
     </>
   )
@@ -197,11 +214,11 @@ export default function CreateDocumentPage() {
         key: 'vatsum', header: 'НДС, сумма *', cls: 'text-right text-zinc-700',
         cell: (it) => manual ? <input value={it.manualVat || ''} onChange={(e) => updateItem(it.id, { manualVat: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> : money(rowVat(it)),
       },
-      { key: 'lgota', header: 'Код льготы', show: showLgota, cell: (it) => <input value={it.lgota} onChange={(e) => updateItem(it.id, { lgota: e.target.value })} placeholder="Код" className={cn(cellInput, 'w-24')} /> },
       {
         key: 'total', header: 'Всего *', cls: 'text-right font-medium text-zinc-900',
         cell: (it) => manual ? <input value={it.manualTotal || ''} onChange={(e) => updateItem(it.id, { manualTotal: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> : money(rowTotal(it)),
       },
+      { key: 'lgota', header: 'Имтиёз (льгота)', show: showLgota, cell: (it) => <input value={it.lgota} onChange={(e) => updateItem(it.id, { lgota: e.target.value })} placeholder="Код льготы" className={cn(cellInput, 'w-32')} /> },
       { key: 'warehouse', header: 'Склад', cell: (it) => <input value={it.warehouse} onChange={(e) => updateItem(it.id, { warehouse: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
       { key: 'actions', header: '', cls: 'text-center', cell: (it) => (
         <button onClick={() => removeItem(it.id)} className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-red-500 transition hover:bg-red-50" aria-label="Удалить">
@@ -283,15 +300,21 @@ export default function CreateDocumentPage() {
         <div className="flex flex-col gap-4">
           <Card title="Сведения партнёра">
             <div className="flex items-stretch">
-              <input className={cn(field, 'rounded-r-none')} placeholder={flags.odnostoronniy ? 'ИНН / ПИНФЛ (необязательно)' : 'ИНН / ПИНФЛ *'} />
-              <button className="flex items-center justify-center rounded-r-lg bg-Smart-blue px-3.5 text-white"><Search className="size-5" /></button>
+              <input disabled={flags.odnostoronniy} className={cn(field, 'rounded-r-none', flags.odnostoronniy && 'bg-gray-50 text-gray-400')} placeholder="ИНН / ПИНФЛ *" />
+              <button disabled={flags.odnostoronniy} className={cn('flex items-center justify-center rounded-r-lg px-3.5 text-white', flags.odnostoronniy ? 'bg-gray-300' : 'bg-Smart-blue')}><Search className="size-5" /></button>
             </div>
             <div className="flex flex-wrap items-center gap-6">
               <Dot checked={flags.odnostoronniy} onChange={() => toggle('odnostoronniy')}>Односторонний документ</Dot>
               <Dot checked={flags.lot} onChange={() => toggle('lot')}>Лот присутствует</Dot>
             </div>
             {flags.odnostoronniy && (
-              <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">Односторонний документ — подпись контрагента не требуется.</div>
+              <div className="relative">
+                <select className={cn(field, 'appearance-none pr-9 text-gray-500')} defaultValue="">
+                  <option value="" disabled>Тип одностороннего документа *</option>
+                  {ONESIDED_TYPES.map((t) => <option key={t}>{t}</option>)}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-3 size-5 text-gray-400" />
+              </div>
             )}
             {flags.lot && (
               <div className="grid grid-cols-2 gap-4">
@@ -310,7 +333,7 @@ export default function CreateDocumentPage() {
             )}
           </Card>
 
-          <Card title="Предприятие партнёра"><OrgFields own={false} /></Card>
+          <Card title="Предприятие партнёра"><OrgFields own={false} disabled={flags.odnostoronniy} /></Card>
         </div>
       </div>
 
