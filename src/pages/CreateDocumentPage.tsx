@@ -27,6 +27,14 @@ const VARIANT_CONFIG: Record<string, { contract: boolean; special?: { label: str
   'Дополнительный (без оплаты)': { contract: false, special: OLD_SF_REQ },
 }
 const VARIANTS = Object.keys(VARIANT_CONFIG)
+
+/** Per-doc-type overrides where a variant's header differs from the default. */
+const VARIANT_OVERRIDES: Record<string, Record<string, { contract: boolean; special?: { label: string; required: boolean } }>> = {
+  'Счет-фактура (ФАРМ)': {
+    'Возмещение расходов (газ, электроэнергия и др.)': { contract: true }, // no special field
+    'Дополнительный (без оплаты)': { contract: true, special: OLD_SF_REQ },
+  },
+}
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
 const DISPENSING = ['Оптовая реализация', 'Розничная реализация', 'Льготный отпуск']
 const ORIGIN = ['Отечественный товар', 'Импортный товар', 'Товар из СЭЗ']
@@ -211,10 +219,10 @@ export default function CreateDocumentPage() {
   const showMarking = flags.marked
   const showLgota = flags.lgota
   const manual = flags.manual
-  const vcfg = VARIANT_CONFIG[variant] ?? { contract: true }
+  const isFarm = docType === 'Счет-фактура (ФАРМ)'
+  const vcfg = VARIANT_OVERRIDES[docType]?.[variant] ?? VARIANT_CONFIG[variant] ?? { contract: true }
   const showContract = vcfg.contract
   const special = vcfg.special
-  const isFarm = docType === 'Счет-фактура (ФАРМ)'
   const [showErrors, setShowErrors] = useState(false)
   const itemErr = (v: string) => showErrors && !String(v).trim()
 
