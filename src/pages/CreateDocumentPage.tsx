@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal'
 import TtnForm from '@/features/documents/TtnForm'
 import HybridForm from '@/features/documents/HybridForm'
 import SmrForm from '@/features/documents/SmrForm'
+import TtnNewForm from '@/features/documents/TtnNewForm'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -238,6 +239,9 @@ export default function CreateDocumentPage() {
   }
   if (docType === 'ЭСФ для строительно-монтажных работ') {
     return <SmrForm docType={docType} onDocType={setDocType} />
+  }
+  if (docType === 'ТТН (новый)') {
+    return <TtnNewForm docType={docType} onDocType={setDocType} />
   }
 
   function updateItem(id: number, patch: Partial<LineItem>) {
