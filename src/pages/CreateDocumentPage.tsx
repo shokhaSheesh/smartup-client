@@ -14,6 +14,9 @@ type LineItem = {
   ikpu: string
   description: string
   barcode: string
+  marking: string
+  lot: string
+  lgota: string
   unit: string
   qty: number
   price: number
@@ -23,7 +26,7 @@ type LineItem = {
 
 let nextId = 3
 function emptyItem(): LineItem {
-  return { id: nextId++, ikpu: '', description: '', barcode: '', unit: 'Штук', qty: 0, price: 0, excise: 0, vat: 15 }
+  return { id: nextId++, ikpu: '', description: '', barcode: '', marking: '', lot: '', lgota: '', unit: 'Штук', qty: 0, price: 0, excise: 0, vat: 15 }
 }
 
 const field =
@@ -82,11 +85,11 @@ export default function CreateDocumentPage() {
     manual: false,
     farm: false,
   })
-  const [yourFlags, setYourFlags] = useState({ komissioner: false, lgota: true, akciz: false })
-  const [partnerFlags, setPartnerFlags] = useState({ odnostoronniy: false, poruchitel: false })
+  const [yourFlags, setYourFlags] = useState({ komissioner: false, lgota: false, akciz: false })
+  const [partnerFlags, setPartnerFlags] = useState({ odnostoronniy: false, poruchitel: false, lot: false })
   const [items, setItems] = useState<LineItem[]>([
-    { id: 1, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 12, price: 24000, excise: 0, vat: 15 },
-    { id: 2, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', unit: 'Штук', qty: 32, price: 12000, excise: 0, vat: 15 },
+    { id: 1, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', marking: '', lot: '', lgota: '', unit: 'Штук', qty: 12, price: 24000, excise: 0, vat: 15 },
+    { id: 2, ikpu: '123456789009876 - Услуга в сфере', description: 'Услуга', barcode: '1234987', marking: '', lot: '', lgota: '', unit: 'Штук', qty: 32, price: 12000, excise: 0, vat: 15 },
   ])
 
   function updateItem(id: number, patch: Partial<LineItem>) {
@@ -103,6 +106,40 @@ export default function CreateDocumentPage() {
   const grandTotal = items.reduce((s, it) => s + rowTotal(it), 0)
 
   const cellCls = 'border-b border-r border-gray-200 px-3 py-2 text-sm'
+  const cellInput = 'bg-transparent outline-none'
+
+  // Conditional item-table columns driven by the toggles (like Didox).
+  const showExcise = flags.excise || yourFlags.akciz
+  const showMarking = flags.marked
+  const showLot = partnerFlags.lot
+  const showLgota = yourFlags.lgota
+
+  type Col = { key: string; header: string; show?: boolean; cls?: string; cell: (it: LineItem, i: number) => React.ReactNode }
+  const cols: Col[] = (
+    [
+      { key: 'num', header: '№', cls: 'text-center text-zinc-700', cell: (_it, i) => i + 1 },
+      { key: 'ikpu', header: 'ИКПУ и наименование товаров (услуг)', cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-56')} /> },
+      { key: 'description', header: 'Описание товаров (услуг)', cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className={cn(cellInput, 'w-40')} /> },
+      { key: 'barcode', header: 'Штрих код', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-28')} /> },
+      { key: 'marking', header: 'Маркировка (KIZ)', show: showMarking, cell: (it) => <input value={it.marking} onChange={(e) => updateItem(it.id, { marking: e.target.value })} placeholder="KIZ" className={cn(cellInput, 'w-32')} /> },
+      { key: 'lot', header: 'Номер лота', show: showLot, cell: (it) => <input value={it.lot} onChange={(e) => updateItem(it.id, { lot: e.target.value })} placeholder="Лот" className={cn(cellInput, 'w-24')} /> },
+      { key: 'unit', header: 'Ед. измер.', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
+      { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
+      { key: 'price', header: 'Цена', cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
+      { key: 'excise', header: 'Акциз сумма', show: showExcise, cell: (it) => <input value={it.excise || ''} onChange={(e) => updateItem(it.id, { excise: num(e.target.value) })} placeholder="0" className={cn(cellInput, 'w-24 text-right')} /> },
+      { key: 'lgota', header: 'Код льготы', show: showLgota, cls: 'text-right', cell: (it) => <input value={it.lgota} onChange={(e) => updateItem(it.id, { lgota: e.target.value })} placeholder="Код" className={cn(cellInput, 'w-24')} /> },
+      { key: 'supply', header: 'Стоимость поставки', cls: 'text-right text-zinc-700', cell: (it) => money(rowSupply(it)) },
+      { key: 'vat', header: 'НДС, %', cell: (it) => <select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} className={cellInput}>{VAT_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}</select> },
+      { key: 'vatsum', header: 'НДС сумма', cls: 'text-right text-zinc-700', cell: (it) => money(rowVat(it)) },
+      { key: 'total', header: '* Всего', cls: 'text-right font-medium text-zinc-900', cell: (it) => money(rowTotal(it)) },
+      { key: 'actions', header: '', cls: 'text-center', cell: (it) => (
+        <button onClick={() => removeItem(it.id)} className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-red-500 transition hover:bg-red-50" aria-label="Удалить">
+          <Trash2 className="size-4" />
+        </button>
+      ) },
+    ] as Col[]
+  ).filter((c) => c.show !== false)
+  const supplyIdx = cols.findIndex((c) => c.key === 'supply')
 
   return (
     <div className="flex flex-col gap-4">
@@ -160,6 +197,19 @@ export default function CreateDocumentPage() {
             </button>
           </Card>
 
+          {yourFlags.komissioner && (
+            <Card title="Посредник (Комиссионер)">
+              <div className="flex items-stretch">
+                <input className={cn(field, 'rounded-r-none')} placeholder="ИНН / ПИНФЛ посредника" />
+                <button className="flex items-center justify-center rounded-r-lg bg-Smart-blue px-3.5 text-white">
+                  <Search className="size-5" />
+                </button>
+              </div>
+              <input className={field} placeholder="Наименование посредника" />
+              <input className={field} placeholder="Номер договора комиссии" />
+            </Card>
+          )}
+
           <Card title="Доверенность">
             <div className="grid grid-cols-2 gap-4">
               <div className="relative">
@@ -180,12 +230,15 @@ export default function CreateDocumentPage() {
               <Search className="size-5" />
             </button>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <CheckBox checked={partnerFlags.odnostoronniy} onChange={() => setPartnerFlags((f) => ({ ...f, odnostoronniy: !f.odnostoronniy }))}>
               Односторонний документ
             </CheckBox>
             <CheckBox checked={partnerFlags.poruchitel} onChange={() => setPartnerFlags((f) => ({ ...f, poruchitel: !f.poruchitel }))}>
               Поручитель
+            </CheckBox>
+            <CheckBox checked={partnerFlags.lot} onChange={() => setPartnerFlags((f) => ({ ...f, lot: !f.lot }))}>
+              Лот присутствует
             </CheckBox>
           </div>
           <input className={field} placeholder="Название" />
@@ -245,9 +298,9 @@ export default function CreateDocumentPage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-white">
-                {['№', 'ИКПУ и наименование товаров (услуг)', 'Описание товаров (услуг)', 'Штрих код', 'Ед. измер.', 'Кол-во', 'Цена', 'Акциз сумма', 'Стоимость поставки', 'НДС, %', 'НДС сумма', '* Всего', ''].map((h, i) => (
-                  <th key={i} className="border-b border-r border-gray-200 px-3 py-3 text-left text-sm font-semibold text-zinc-900 last:border-r-0">
-                    {h}
+                {cols.map((c) => (
+                  <th key={c.key} className="border-b border-r border-gray-200 px-3 py-3 text-left text-sm font-semibold text-zinc-900 last:border-r-0">
+                    {c.header}
                   </th>
                 ))}
               </tr>
@@ -255,53 +308,17 @@ export default function CreateDocumentPage() {
             <tbody>
               {items.map((it, idx) => (
                 <tr key={it.id}>
-                  <td className={cn(cellCls, 'text-center text-zinc-700')}>{idx + 1}</td>
-                  <td className={cellCls}>
-                    <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className="w-56 bg-transparent outline-none" />
-                  </td>
-                  <td className={cellCls}>
-                    <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className="w-40 bg-transparent outline-none" />
-                  </td>
-                  <td className={cellCls}>
-                    <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className="w-28 bg-transparent outline-none" />
-                  </td>
-                  <td className={cellCls}>
-                    <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className="bg-transparent outline-none">
-                      {UNITS.map((u) => <option key={u}>{u}</option>)}
-                    </select>
-                  </td>
-                  <td className={cellCls}>
-                    <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className="w-14 bg-transparent text-right outline-none" />
-                  </td>
-                  <td className={cellCls}>
-                    <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className="w-24 bg-transparent text-right outline-none" />
-                  </td>
-                  <td className={cellCls}>
-                    <input value={it.excise || ''} onChange={(e) => updateItem(it.id, { excise: num(e.target.value) })} placeholder="0" className="w-24 bg-transparent text-right outline-none" />
-                  </td>
-                  <td className={cn(cellCls, 'text-right text-zinc-700')}>{money(rowSupply(it))}</td>
-                  <td className={cellCls}>
-                    <select value={it.vat} onChange={(e) => updateItem(it.id, { vat: Number(e.target.value) })} className="bg-transparent outline-none">
-                      {VAT_RATES.map((r) => <option key={r} value={r}>{r}%</option>)}
-                    </select>
-                  </td>
-                  <td className={cn(cellCls, 'text-right text-zinc-700')}>{money(rowVat(it))}</td>
-                  <td className={cn(cellCls, 'text-right font-medium text-zinc-900')}>{money(rowTotal(it))}</td>
-                  <td className={cn(cellCls, 'text-center')}>
-                    <button
-                      onClick={() => removeItem(it.id)}
-                      className="flex size-7 items-center justify-center rounded-md border border-gray-200 text-red-500 transition hover:bg-red-50"
-                      aria-label="Удалить"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </td>
+                  {cols.map((c) => (
+                    <td key={c.key} className={cn(cellCls, c.cls)}>
+                      {c.cell(it, idx)}
+                    </td>
+                  ))}
                 </tr>
               ))}
               <tr>
-                <td colSpan={8} className="px-3 py-3 text-right text-sm font-semibold text-slate-700">Итого:</td>
+                <td colSpan={supplyIdx} className="px-3 py-3 text-right text-sm font-semibold text-slate-700">Итого:</td>
                 <td className="px-3 py-3 text-right text-sm font-semibold text-slate-800">{money(totalSupply)}</td>
-                <td colSpan={4} />
+                <td colSpan={cols.length - supplyIdx - 1} />
               </tr>
             </tbody>
           </table>
