@@ -210,15 +210,17 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
         </Card>
       </div>
 
-      {/* Клиент / Заказчик */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Клиент" help>
-          <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
-        </Card>
-        <Card title="Заказчик" help>
-          <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
-        </Card>
-      </div>
+      {/* Клиент / Заказчик — hidden when the forwarder is also the carrier */}
+      {!expIsCarrier && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card title="Клиент" help>
+            <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+          </Card>
+          <Card title="Заказчик" help>
+            <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+          </Card>
+        </div>
+      )}
 
       {/* Тип транспорта */}
       <Card title="Тип транспорта" help>
