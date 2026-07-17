@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, ChevronDown, Plus, Minus, Trash2, Pencil, ArrowUpRight } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
 import { Modal } from '@/components/ui/Modal'
+import TtnForm from '@/features/documents/TtnForm'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -225,6 +226,11 @@ export default function CreateDocumentPage() {
   const special = vcfg.special
   const [showErrors, setShowErrors] = useState(false)
   const itemErr = (v: string) => showErrors && !String(v).trim()
+
+  // ТТН is a completely different form — render its own component.
+  if (docType === 'Товарно-транспортная накладная') {
+    return <TtnForm docType={docType} onDocType={setDocType} />
+  }
 
   function updateItem(id: number, patch: Partial<LineItem>) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)))
