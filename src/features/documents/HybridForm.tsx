@@ -98,7 +98,8 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
   const [markCodes, setMarkCodes] = useState<string[]>([''])
   const [markOrderId, setMarkOrderId] = useState('')
 
-  const isAmendment = variant !== 'Стандартный'
+  const showContract = variant !== 'Дополнительный'
+  const showOldId = variant !== 'Стандартный'
   const isFarm = docType === 'Гибридная счет-фактура (ФАРМ)'
 
   const field = 'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
@@ -177,12 +178,14 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
           <PillSelect options={[...DOC_TYPES]} value={docType} onChange={onDocType} />
           <PillSelect options={HYBRID_VARIANTS} value={variant} onChange={setVariant} />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-2xl">
-          <LF label="Номер счёт-фактуры" required />
-          <LF label="Дата документа" required date />
-          {isAmendment && <LF label="ID старой счёт-фактуры" required />}
-          <LF label="Номер контракта" required />
-          <LF label="Дата контракта" required date />
+        <div className="flex flex-col gap-4 sm:max-w-2xl">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <LF label="Номер счёт-фактуры" required />
+            <LF label="Дата документа" required date />
+            {showContract && <LF label="Номер контракта" required />}
+            {showContract && <LF label="Дата контракта" required date />}
+          </div>
+          {showOldId && <LF label="ID старой гибридной счёт-фактуры" required />}
         </div>
       </Card>
 
