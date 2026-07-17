@@ -6,7 +6,18 @@ import { Modal } from '@/components/ui/Modal'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
-const VARIANTS = ['Стандартный', 'Дополнительный', 'Исправленный']
+/**
+ * Per-variant header rules. `contract` = show Номер/Дата контракта;
+ * `special` = an extra 3rd-column field (label + required).
+ * Add new subtypes here as their Didox forms come in.
+ */
+const VARIANT_CONFIG: Record<string, { contract: boolean; special?: { label: string; required: boolean } }> = {
+  Стандартный: { contract: true },
+  Дополнительный: { contract: false, special: { label: 'ID старой счёт-фактуры', required: true } },
+  Исправленный: { contract: true, special: { label: 'ID старой счёт-фактуры', required: false } },
+  'Возмещение расходов (газ, электроэнергия и др.)': { contract: true, special: { label: 'ID входящей сф', required: true } },
+}
+const VARIANTS = Object.keys(VARIANT_CONFIG)
 const UNITS = ['Штук', 'кг', 'литр', 'метр', 'услуга']
 const VAT_RATES = [-1, 0, 12, 15]
 const vatLabel = (r: number) => (r < 0 ? 'Без НДС' : `${r}%`)
@@ -184,13 +195,9 @@ export default function CreateDocumentPage() {
   const showMarking = flags.marked
   const showLgota = flags.lgota
   const manual = flags.manual
-  // Header layout by variant:
-  //  Стандартный   → contract fields, no old-invoice id
-  //  Дополнительный → old-invoice id (required), no contract fields
-  //  Исправленный  → contract fields + old-invoice id
-  const showOldInvoice = variant === 'Дополнительный' || variant === 'Исправленный'
-  const oldInvoiceRequired = variant === 'Дополнительный'
-  const showContract = variant !== 'Дополнительный'
+  const vcfg = VARIANT_CONFIG[variant] ?? { contract: true }
+  const showContract = vcfg.contract
+  const special = vcfg.special
   const [showErrors, setShowErrors] = useState(false)
   const itemErr = (v: string) => showErrors && !String(v).trim()
 
@@ -298,7 +305,7 @@ export default function CreateDocumentPage() {
             {showContract && <Req placeholder="Дата контракта *" date required showErrors={showErrors} />}
           </div>
           <div className="flex flex-col gap-4">
-            {showOldInvoice && <Req placeholder={`ID старой счёт-фактуры${oldInvoiceRequired ? ' *' : ''}`} required={oldInvoiceRequired} showErrors={showErrors} />}
+            {special && <Req placeholder={`${special.label}${special.required ? ' *' : ''}`} required={special.required} showErrors={showErrors} />}
             <Req placeholder="ID договора" search />
             <Req placeholder="ТТН ИД" search />
           </div>
