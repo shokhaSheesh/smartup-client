@@ -4,6 +4,7 @@ import { Search, ChevronDown, Plus, Minus, Trash2, Pencil, ArrowUpRight } from '
 import { PillSelect } from '@/components/ui/PillSelect'
 import { Modal } from '@/components/ui/Modal'
 import TtnForm from '@/features/documents/TtnForm'
+import HybridForm from '@/features/documents/HybridForm'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -227,9 +228,12 @@ export default function CreateDocumentPage() {
   const [showErrors, setShowErrors] = useState(false)
   const itemErr = (v: string) => showErrors && !String(v).trim()
 
-  // ТТН is a completely different form — render its own component.
+  // ТТН and Гибридная are completely different forms.
   if (docType === 'Товарно-транспортная накладная') {
     return <TtnForm docType={docType} onDocType={setDocType} />
+  }
+  if (docType === 'Гибридная счет-фактура') {
+    return <HybridForm docType={docType} onDocType={setDocType} />
   }
 
   function updateItem(id: number, patch: Partial<LineItem>) {

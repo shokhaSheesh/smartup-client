@@ -175,6 +175,12 @@ Config-driven item columns; still refining exact toggle effects vs Didox.
 is a separate waybill form — Тип перевозки, Тип транспорта (авто/ж-д conditional), Заказчик /
 Грузоотправитель·Перевозчик (пункты vs станции), Особые отметки, Сдал/Принял/расстояние, and its
 own items table (стоимость/масса/класс груза). Selecting ТТН early-returns `TtnForm`.
+**Гибридная счёт-фактура** (`HybridForm.tsx`) = invoice + logistics: variants Стандартный/
+Дополнительный/Исправленный, Ваши сведения/партнёр, Экспедитор/Грузоперевозчик, Клиент/Заказчик,
+Тип транспорта (only Автомобиль enabled), Водитель/Ответственное лицо, Адрес погрузки/доставки,
+Доверенность, items table with conditional columns (Комиссионер→комитент cols, Акциз, Товар
+маркирован, Есть льгота→Без НДС+Льгота, always Склад+Происхождение товара), Общее расстояние/
+Стоимость доставки, Брутто/Нетто. Selecting it early-returns `HybridForm`.
 
 **Document list** has a toggleable **Фильтр** panel (`DocumentsFilterPanel`): date range,
 type, number, amount range, «Есть льгота» → wired to filtering; Договор/Комиссионер/
