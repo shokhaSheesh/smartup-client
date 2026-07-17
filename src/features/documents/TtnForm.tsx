@@ -74,6 +74,7 @@ export default function TtnForm({ docType, onDocType }: { docType: string; onDoc
   const [shipment, setShipment] = useState<'warehouse' | 'seller'>('seller')
   const [transport, setTransport] = useState<'auto' | 'rail'>('auto')
   const [trailer, setTrailer] = useState<'trailer' | 'semi' | null>(null)
+  const [summary, setSummary] = useState(false)
   const [items, setItems] = useState<TtnItem[]>([emptyItem()])
 
   const isAuto = transport === 'auto'
@@ -142,8 +143,9 @@ export default function TtnForm({ docType, onDocType }: { docType: string; onDoc
             </div>
             <div className="flex items-center gap-6">
               <input className={cn(field, 'sm:max-w-xs')} placeholder="ФИО водителя" />
-              <Radio checked={false} onChange={() => {}}>Сводная на всю смену</Radio>
+              <Radio checked={summary} onChange={() => setSummary(!summary)}>Сводная на всю смену</Radio>
             </div>
+            {summary && <input className={cn(field, 'sm:max-w-xs')} placeholder="Количество ездок" />}
           </div>
         ) : (
           <div className="mt-4 grid grid-cols-2 gap-4 sm:max-w-md">
