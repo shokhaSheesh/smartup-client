@@ -56,15 +56,49 @@ const field =
   'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
 const cellInput = 'bg-transparent outline-none'
 
-function Fld({ label, value, required, dropdown, date, disabled }: { label: string; value?: string; required?: boolean; dropdown?: boolean; date?: boolean; disabled?: boolean }) {
+function Fld({ label, value, required, dropdown, date, disabled, showErrors }: { label: string; value?: string; required?: boolean; dropdown?: boolean; date?: boolean; disabled?: boolean; showErrors?: boolean }) {
+  const [val, setVal] = useState(value ?? '')
+  const error = Boolean(required && showErrors && !disabled && !String(val).trim())
   return (
-    <div className={cn('relative flex flex-col rounded-lg border px-3.5 py-1.5', disabled ? 'border-gray-200 bg-gray-50' : 'border-gray-300 bg-white')}>
-      <span className="text-xs text-gray-500">
-        {required && <span className="text-red-500">*</span>}
-        {label}
-      </span>
-      <input disabled={disabled} defaultValue={value} type={date ? 'date' : 'text'} className={cn('w-full bg-transparent text-sm outline-none', disabled ? 'text-gray-400' : 'text-slate-800')} />
-      {dropdown && <ChevronDown className="pointer-events-none absolute right-3 top-4 size-4 text-gray-400" />}
+    <div>
+      <div className={cn('relative flex flex-col rounded-lg border px-3.5 py-1.5', error ? 'border-red-400 bg-red-50' : disabled ? 'border-gray-200 bg-gray-50' : 'border-gray-300 bg-white')}>
+        <span className="text-xs text-gray-500">
+          {required && <span className="text-red-500">*</span>}
+          {label}
+        </span>
+        <input value={val} onChange={(e) => setVal(e.target.value)} disabled={disabled} type={date ? 'date' : 'text'} className={cn('w-full bg-transparent text-sm outline-none', disabled ? 'text-gray-400' : 'text-slate-800')} />
+        {dropdown && <ChevronDown className="pointer-events-none absolute right-3 top-4 size-4 text-gray-400" />}
+      </div>
+      {error && <p className="mt-1 text-xs text-red-500">Обязательное поле</p>}
+    </div>
+  )
+}
+
+/** Required plain input that shows the «Обязательное поле» error on submit. */
+function Req({ placeholder, required, showErrors, date, disabled, search }: { placeholder: string; required?: boolean; showErrors?: boolean; date?: boolean; disabled?: boolean; search?: boolean }) {
+  const [val, setVal] = useState('')
+  const error = Boolean(required && showErrors && !disabled && !val.trim())
+  return (
+    <div>
+      <div className={cn('flex items-stretch', search && 'rounded-lg')}>
+        <div className="relative flex-1">
+          {search && <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-400" />}
+          <input
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            disabled={disabled}
+            type={date ? 'date' : 'text'}
+            placeholder={placeholder}
+            className={cn(field, search && 'rounded-r-none pl-10', error && 'border-red-400 bg-red-50', disabled && 'bg-gray-50 text-gray-400')}
+          />
+        </div>
+        {search && (
+          <button disabled={disabled} className={cn('flex items-center justify-center rounded-r-lg px-3.5 text-white', disabled ? 'bg-gray-300' : 'bg-Smart-blue')}>
+            <Search className="size-5" />
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-1 text-xs text-red-500">Обязательное поле</p>}
     </div>
   )
 }
@@ -96,17 +130,17 @@ function money(n: number): string {
   return n.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function OrgFields({ own, disabled }: { own: boolean; disabled?: boolean }) {
+function OrgFields({ own, disabled, showErrors }: { own: boolean; disabled?: boolean; showErrors?: boolean }) {
   return (
     <>
-      <Fld label="Наименование" required disabled={disabled} value={own ? '"UDEVS" MCHJ' : undefined} />
+      <Fld label="Название" required showErrors={showErrors} disabled={disabled} value={own ? '"UDEVS" MCHJ' : undefined} />
       <Fld label="Регистрационный код плательщика НДС" disabled={disabled} value={own ? '326090125584' : undefined} />
       <div className="grid grid-cols-2 gap-4">
         <Fld label="Расчётный счёт" dropdown disabled={disabled} value={own ? '20208000505191969001' : undefined} />
         <Fld label="МФО, SWIFT и др." dropdown disabled={disabled} value={own ? '01095' : undefined} />
       </div>
-      <Fld label="Наименование банка" disabled={disabled} value={own ? 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK" АТ БАНКИ' : undefined} />
-      <Fld label="Адрес" required disabled={disabled} value={own ? 'ТОШКЕНТ ШАҲАР ОЛМАЗОР ТУМАНИ Yangi Olmazor ko\'chasi' : undefined} />
+      <Fld label="Название банка" disabled={disabled} value={own ? 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK" АТ БАНКИ' : undefined} />
+      <Fld label="Адрес" required showErrors={showErrors} disabled={disabled} value={own ? 'ТОШКЕНТ ШАҲАР ОЛМАЗОР ТУМАНИ Yangi Olmazor ko\'chasi' : undefined} />
       <div className="grid grid-cols-2 gap-4">
         <Fld label="Директор" disabled={disabled} value={own ? 'BAXODIROV AZIZBEK' : undefined} />
         <Fld label="Глав. бух." disabled={disabled} />
@@ -151,6 +185,8 @@ export default function CreateDocumentPage() {
   const showLgota = flags.lgota
   const manual = flags.manual
   const isAmendment = variant !== 'Стандартный'
+  const [showErrors, setShowErrors] = useState(false)
+  const itemErr = (v: string) => showErrors && !String(v).trim()
 
   function updateItem(id: number, patch: Partial<LineItem>) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)))
@@ -181,12 +217,12 @@ export default function CreateDocumentPage() {
     setMarkingRow(null)
   }
 
-  type Col = { key: string; header: React.ReactNode; show?: boolean; cls?: string; cell: (it: LineItem, i: number) => React.ReactNode }
+  type Col = { key: string; header: React.ReactNode; show?: boolean; cls?: string | ((it: LineItem) => string | undefined); cell: (it: LineItem, i: number) => React.ReactNode }
   const cols: Col[] = (
     [
       { key: 'num', header: '№', cls: 'text-center text-zinc-700', cell: (_it, i) => i + 1 },
-      { key: 'ikpu', header: 'ИКПУ и наименование товаров (работ, услуг) *', cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-56')} /> },
-      { key: 'description', header: 'Описание товаров (работ, услуг) *', cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className={cn(cellInput, 'w-40')} /> },
+      { key: 'ikpu', header: 'ИКПУ и наименование товаров (работ, услуг) *', cls: (it: LineItem) => itemErr(it.ikpu) ? 'bg-red-50' : undefined, cell: (it) => <input value={it.ikpu} onChange={(e) => updateItem(it.id, { ikpu: e.target.value })} placeholder="ИКПУ" className={cn(cellInput, 'w-56')} /> },
+      { key: 'description', header: 'Описание товаров (работ, услуг) *', cls: (it: LineItem) => itemErr(it.description) ? 'bg-red-50' : undefined, cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} placeholder="Описание" className={cn(cellInput, 'w-40')} /> },
       { key: 'barcode', header: 'Штрих код товара/услуги', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
       {
         key: 'marking', header: 'Маркировка', show: showMarking, cell: (it) => (
@@ -198,7 +234,7 @@ export default function CreateDocumentPage() {
       },
       { key: 'unit', header: 'Ед. измер. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
       { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
-      { key: 'price', header: 'Цена *', cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
+      { key: 'price', header: 'Цена *', cls: (it: LineItem) => (showErrors && !it.price ? 'bg-red-50 text-right' : 'text-right'), cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
       {
         key: 'exciseRate', show: showExcise,
         header: (
@@ -248,23 +284,17 @@ export default function CreateDocumentPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 p-6 lg:grid-cols-3">
           <div className="flex flex-col gap-4">
-            <input className={field} placeholder="Номер счёт-фактуры *" />
-            {!isAmendment && <input className={field} placeholder="Номер контракта *" />}
+            <Req placeholder="Номер счёт-фактуры *" required showErrors={showErrors} />
+            {!isAmendment && <Req placeholder="Номер контракта *" required showErrors={showErrors} />}
           </div>
           <div className="flex flex-col gap-4">
-            <input type="date" className={field} placeholder="Дата документа *" />
-            {!isAmendment && <input type="date" className={field} placeholder="Дата контракта *" />}
+            <Req placeholder="Дата документа *" date required showErrors={showErrors} />
+            {!isAmendment && <Req placeholder="Дата контракта *" date required showErrors={showErrors} />}
           </div>
           <div className="flex flex-col gap-4">
-            {isAmendment && <input className={field} placeholder="ID старой счёт-фактуры *" />}
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-400" />
-              <input className={cn(field, 'pl-10')} placeholder="ID договора" />
-            </div>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3.5 top-3 size-5 text-gray-400" />
-              <input className={cn(field, 'pl-10')} placeholder="ТТН ИД" />
-            </div>
+            {isAmendment && <Req placeholder="ID старой счёт-фактуры *" required showErrors={showErrors} />}
+            <Req placeholder="ID договора" search />
+            <Req placeholder="ТТН ИД" search />
           </div>
         </div>
       </div>
@@ -295,7 +325,7 @@ export default function CreateDocumentPage() {
             </Card>
           )}
 
-          <Card title="Компания"><OrgFields own /></Card>
+          <Card title="Компания"><OrgFields own showErrors={showErrors} /></Card>
 
           <Card title="Товар отпустил">
             <div className="grid grid-cols-2 gap-4">
@@ -308,10 +338,7 @@ export default function CreateDocumentPage() {
         {/* RIGHT */}
         <div className="flex flex-col gap-4">
           <Card title="Сведения партнёра">
-            <div className="flex items-stretch">
-              <input disabled={flags.odnostoronniy} className={cn(field, 'rounded-r-none', flags.odnostoronniy && 'bg-gray-50 text-gray-400')} placeholder="ИНН / ПИНФЛ *" />
-              <button disabled={flags.odnostoronniy} className={cn('flex items-center justify-center rounded-r-lg px-3.5 text-white', flags.odnostoronniy ? 'bg-gray-300' : 'bg-Smart-blue')}><Search className="size-5" /></button>
-            </div>
+            <Req placeholder="ИНН / ПИНФЛ *" search required={!flags.odnostoronniy} disabled={flags.odnostoronniy} showErrors={showErrors} />
             <div className="flex flex-wrap items-center gap-6">
               <Dot checked={flags.odnostoronniy} onChange={() => toggle('odnostoronniy')}>Односторонний документ</Dot>
               <Dot checked={flags.lot} onChange={() => toggle('lot')}>Лот присутствует</Dot>
@@ -342,7 +369,7 @@ export default function CreateDocumentPage() {
             )}
           </Card>
 
-          <Card title="Компания партнёра"><OrgFields own={false} disabled={flags.odnostoronniy} /></Card>
+          <Card title="Компания партнёра"><OrgFields own={false} disabled={flags.odnostoronniy} showErrors={showErrors} /></Card>
         </div>
       </div>
 
@@ -381,7 +408,7 @@ export default function CreateDocumentPage() {
               {items.map((it, idx) => (
                 <tr key={it.id}>
                   {cols.map((c) => (
-                    <td key={c.key} className={cn(cellCls, c.cls)}>{c.cell(it, idx)}</td>
+                    <td key={c.key} className={cn(cellCls, typeof c.cls === 'function' ? c.cls(it) : c.cls)}>{c.cell(it, idx)}</td>
                   ))}
                 </tr>
               ))}
@@ -428,8 +455,8 @@ export default function CreateDocumentPage() {
           Счёт-фактура с актом
         </label>
         <div className="flex items-center gap-3">
-          <button className="rounded-lg bg-Smart-blue px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">Сохранить</button>
-          <button onClick={() => navigate('/documents/outgoing')} className="rounded-lg bg-Smart-green px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">Подписать</button>
+          <button onClick={() => setShowErrors(true)} className="rounded-lg bg-Smart-blue px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">Сохранить</button>
+          <button onClick={() => setShowErrors(true)} className="rounded-lg bg-Smart-green px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-105">Подписать</button>
           <button onClick={() => navigate(-1)} className="rounded-lg border border-red-300 px-6 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50">Отмена</button>
         </div>
       </div>
