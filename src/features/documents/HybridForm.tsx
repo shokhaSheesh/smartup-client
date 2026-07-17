@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Plus, Trash2, Check, HelpCircle } from 'lucide-react'
+import { ChevronDown, Plus, Trash2, Check, HelpCircle, Pencil, Search } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
+import { Modal } from '@/components/ui/Modal'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -93,9 +94,22 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
   const [trailer, setTrailer] = useState(false)
   const [driverIsResp, setDriverIsResp] = useState(false)
   const [items, setItems] = useState<LineItem[]>([emptyItem()])
+  const [markingRow, setMarkingRow] = useState<number | null>(null)
+  const [markCodes, setMarkCodes] = useState<string[]>([''])
+  const [markOrderId, setMarkOrderId] = useState('')
 
   const isAmendment = variant !== 'Стандартный'
   const isFarm = docType === 'Гибридная счет-фактура (ФАРМ)'
+
+  const field = 'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
+  function openMarking(id: number) { setMarkingRow(id); setMarkOrderId(''); setMarkCodes(['']) }
+  function saveMarking() {
+    if (markingRow !== null) {
+      const codes = markCodes.filter(Boolean)
+      updateItem(markingRow, { marking: codes.length ? codes.join(', ') : '' })
+    }
+    setMarkingRow(null)
+  }
 
   function updateItem(id: number, patch: Partial<LineItem>) {
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)))
@@ -118,12 +132,19 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
     { key: 'description', header: 'Описание товаров *', cell: (it) => <input value={it.description} onChange={(e) => updateItem(it.id, { description: e.target.value })} className={cn(cellInput, 'w-36')} /> },
     { key: 'barcode', header: 'Штрих код товара/услуги', cell: (it) => <input value={it.barcode} onChange={(e) => updateItem(it.id, { barcode: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
     { key: 'dispensing', header: 'Отпуск лекарственных средств *', show: isFarm, cell: (it) => <select value={it.dispensing} onChange={(e) => updateItem(it.id, { dispensing: e.target.value })} className={cn(cellInput, 'w-40', !it.dispensing && 'text-gray-400')}><option value="">Выберите</option>{DISPENSING.map((d) => <option key={d}>{d}</option>)}</select> },
-    { key: 'series', header: 'Серия', show: isFarm, cell: (it) => <input value={it.series} onChange={(e) => updateItem(it.id, { series: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
-    { key: 'marking', header: 'Маркировка', show: flags.marked, cell: (it) => <input value={it.marking} onChange={(e) => updateItem(it.id, { marking: e.target.value })} placeholder="KIZ" className={cn(cellInput, 'w-28')} /> },
+    { key: 'series', header: 'Серия *', show: isFarm, cell: (it) => <input value={it.series} onChange={(e) => updateItem(it.id, { series: e.target.value })} placeholder="—" className={cn(cellInput, 'w-24')} /> },
+    {
+      key: 'marking', header: 'Маркировки', show: flags.marked, cell: (it) => (
+        <button onClick={() => openMarking(it.id)} className="flex items-center gap-1.5 text-left">
+          <span className={it.marking ? 'text-Smart-green' : 'text-gray-500'}>{it.marking ? 'Маркирован' : 'Немаркирован'}</span>
+          <Pencil className="size-3.5 text-Smart-blue" />
+        </button>
+      ),
+    },
     { key: 'unit', header: 'Ед. изм. *', cell: (it) => <select value={it.unit} onChange={(e) => updateItem(it.id, { unit: e.target.value })} className={cellInput}>{UNITS.map((u) => <option key={u}>{u}</option>)}</select> },
     { key: 'qty', header: 'Кол-во', cell: (it) => <input value={it.qty || ''} onChange={(e) => updateItem(it.id, { qty: num(e.target.value) })} className={cn(cellInput, 'w-14 text-right')} /> },
     { key: 'basePrice', header: 'Базовая цена', show: isFarm, cell: (it) => <input value={it.basePrice || ''} onChange={(e) => updateItem(it.id, { basePrice: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
-    { key: 'markup', header: 'Наценка, %', show: isFarm, cell: (it) => <input value={it.markup || ''} onChange={(e) => updateItem(it.id, { markup: num(e.target.value) })} className={cn(cellInput, 'w-16 text-right')} /> },
+    { key: 'markup', header: 'Наценка %', show: isFarm, cell: (it) => <input value={it.markup || ''} onChange={(e) => updateItem(it.id, { markup: num(e.target.value) })} className={cn(cellInput, 'w-16 text-right')} /> },
     { key: 'price', header: 'Цена *', cls: 'text-right', cell: (it) => <input value={it.price || ''} onChange={(e) => updateItem(it.id, { price: num(e.target.value) })} className={cn(cellInput, 'w-24 text-right')} /> },
     {
       key: 'exciseRate', show: flags.excise,
@@ -337,6 +358,27 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
           <button onClick={() => navigate(-1)} className="rounded-lg border border-red-300 px-6 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50">Отмена</button>
         </div>
       </div>
+
+      {/* Marking modal */}
+      <Modal open={markingRow !== null} onClose={() => setMarkingRow(null)} title="Введите код маркировки" maxWidth="max-w-xl">
+        <div className="flex flex-col gap-4 p-6">
+          <div className="flex items-stretch gap-2">
+            <input value={markOrderId} onChange={(e) => setMarkOrderId(e.target.value)} className={field} placeholder="ID заказа" />
+            <button className="flex items-center justify-center rounded-lg border border-gray-200 px-3.5 text-gray-500 hover:bg-gray-50"><Search className="size-5" /></button>
+          </div>
+          {markCodes.map((code, i) => (
+            <div key={i} className="flex items-stretch gap-2">
+              <input value={code} onChange={(e) => setMarkCodes((c) => c.map((x, j) => (j === i ? e.target.value : x)))} className={field} placeholder="Код маркировки" />
+              <button onClick={() => setMarkCodes((c) => [...c, ''])} className="flex items-center justify-center rounded-lg border border-gray-200 px-3.5 text-Smart-green hover:bg-gray-50"><Plus className="size-5" /></button>
+              <button onClick={() => setMarkCodes((c) => (c.length > 1 ? c.filter((_, j) => j !== i) : c))} className="flex items-center justify-center rounded-lg border border-gray-200 px-3.5 text-red-500 hover:bg-red-50"><Trash2 className="size-5" /></button>
+            </div>
+          ))}
+          <div className="flex justify-center gap-3 pt-2">
+            <button onClick={() => setMarkingRow(null)} className="rounded-lg bg-slate-400 px-6 py-2.5 text-sm font-semibold text-white hover:brightness-105">Закрыть</button>
+            <button onClick={saveMarking} className="rounded-lg bg-Smart-blue px-6 py-2.5 text-sm font-semibold text-white hover:brightness-105">Сохранить</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
