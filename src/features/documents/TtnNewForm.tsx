@@ -106,6 +106,8 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
   const contractRequired = shipment === 'seller' || shipment === 'processing'
   const isWarehouse = shipment === 'warehouse'
   const forwarderActive = senderIsForwarder || receiverIsForwarder
+  const showContract = variant !== 'Дополнительный'
+  const showOldId = variant !== 'Стандартный'
   const isRail = transport === 'rail'
   const isAuto = transport === 'auto'
 
@@ -136,11 +138,14 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
           <Radio checked={shipment === 'processing'} onChange={() => setShipment('processing')}>Переработка/хранение</Radio>
           <Radio checked={shipment === 'postal'} onChange={() => setShipment('postal')}>Почтовые и курьерские услуги</Radio>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-2xl">
-          <LF label="Номер товарно-транспортной накладной" />
-          <LF label="Дата документа" required date />
-          <LF label="Номер контракта" required={contractRequired} />
-          <LF label="Дата контракта" required={contractRequired} date />
+        <div className="flex flex-col gap-4 sm:max-w-2xl">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <LF label="Номер товарно-транспортной накладной" />
+            <LF label="Дата документа" required date />
+            {showContract && <LF label="Номер контракта" required={contractRequired} />}
+            {showContract && <LF label="Дата контракта" required={contractRequired} date />}
+          </div>
+          {showOldId && <LF label="ID старой ТТН" required />}
         </div>
       </Card>
 
