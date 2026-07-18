@@ -32,7 +32,7 @@ export function PillSelect({ options, value, onChange }: PillSelectProps) {
       </button>
 
       {open && (
-        <div className="absolute left-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-gray-100 bg-white py-1 shadow-[0px_12px_24px_0px_rgba(91,104,113,0.24)]">
+        <div className="absolute left-0 z-30 mt-2 max-h-64 w-64 overflow-y-auto rounded-xl border border-gray-100 bg-white py-1 shadow-[0px_12px_24px_0px_rgba(91,104,113,0.24)]">
           {options.map((opt) => (
             <button
               key={opt}
@@ -42,7 +42,7 @@ export function PillSelect({ options, value, onChange }: PillSelectProps) {
                 setOpen(false)
               }}
               className={cn(
-                'flex w-full items-center justify-between gap-2 px-5 py-3 text-left text-sm font-medium transition hover:bg-gray-50',
+                'flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm font-medium transition hover:bg-gray-50',
                 opt === value ? 'text-Smart-blue' : 'text-slate-700',
               )}
             >
