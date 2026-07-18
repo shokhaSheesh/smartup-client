@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Plus, Trash2, Check, HelpCircle, Map, Search } from 'lucide-react'
+import { ChevronDown, Plus, Trash2, Check, HelpCircle, Map, Search, Info } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
@@ -20,12 +20,15 @@ function mass(n: number): string {
   return n.toLocaleString('ru-RU', { minimumFractionDigits: 5, maximumFractionDigits: 5 })
 }
 
-function LF({ label, required, value, dropdown, date, disabled, search }: { label: string; required?: boolean; value?: string; dropdown?: boolean; date?: boolean; disabled?: boolean; search?: boolean }) {
-  const [v, setV] = useState(value ?? '')
+function LF({ label, required, value, onChange, dropdown, date, disabled, search }: { label: string; required?: boolean; value?: string; onChange?: (v: string) => void; dropdown?: boolean; date?: boolean; disabled?: boolean; search?: boolean }) {
+  const [internal, setInternal] = useState(value ?? '')
+  const controlled = onChange !== undefined
+  const val = controlled ? (value ?? '') : internal
+  const setVal = controlled ? onChange! : setInternal
   return (
     <div className={cn('relative flex flex-col rounded-lg border px-3.5 py-1.5', disabled ? 'border-gray-200 bg-gray-50' : 'border-gray-300 bg-white')}>
       <span className="text-xs text-gray-500">{label}{required && <span className="text-red-500"> *</span>}</span>
-      <input value={v} onChange={(e) => setV(e.target.value)} type={date ? 'date' : 'text'} disabled={disabled} className={cn('w-full bg-transparent text-sm outline-none', disabled ? 'text-gray-400' : 'text-slate-800')} />
+      <input value={val} onChange={(e) => setVal(e.target.value)} type={date ? 'date' : 'text'} disabled={disabled} className={cn('w-full bg-transparent text-sm outline-none', disabled ? 'text-gray-400' : 'text-slate-800')} />
       {dropdown && <ChevronDown className="pointer-events-none absolute right-3 top-4 size-4 text-gray-400" />}
       {search && <Search className="pointer-events-none absolute right-3 top-4 size-4 text-gray-400" />}
     </div>
@@ -88,6 +91,14 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
   const [trailer, setTrailer] = useState(false)
   const [driverIsResp, setDriverIsResp] = useState(false)
   const [items, setItems] = useState<Item[]>([emptyItem()])
+  // Linked ИНН fields
+  const SENDER_INN = '307205394'
+  const [receiverInn, setReceiverInn] = useState('')
+  const [expInn, setExpInn] = useState('')
+  const [carrierInn, setCarrierInn] = useState('')
+  const expeditorInn = senderIsForwarder ? SENDER_INN : receiverIsForwarder ? receiverInn : expInn
+  const carrierInnValue = expIsCarrier ? expeditorInn : carrierInn
+  const expAuto = senderIsForwarder || receiverIsForwarder
 
   const contractRequired = shipment === 'seller' || shipment === 'processing'
   const isWarehouse = shipment === 'warehouse'
@@ -136,8 +147,8 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
         </Card>
         <Card title="Грузополучатель" extra={<CheckBox checked={receiverIsForwarder} onChange={() => setReceiverIsForwarder(!receiverIsForwarder)} disabled={isWarehouse}>Одновременно и экспедитор</CheckBox>}>
           <div className="grid grid-cols-2 gap-3">
-            <LF label="ИНН/ПИНФЛ" required value={isWarehouse ? '307205394' : undefined} disabled={isWarehouse} />
-            <LF label="Название" required value={isWarehouse ? '"UDEVS" MCHJ' : undefined} disabled={isWarehouse} />
+            <LF label="ИНН/ПИНФЛ" required={!oneSided} value={isWarehouse ? SENDER_INN : receiverInn} onChange={setReceiverInn} disabled={isWarehouse || oneSided} />
+            <LF label="Название" required={!oneSided} value={isWarehouse ? '"UDEVS" MCHJ' : undefined} disabled={isWarehouse || oneSided} />
           </div>
           <div className="mt-3"><CheckBox checked={oneSided} onChange={() => setOneSided(!oneSided)}>Односторонний документ</CheckBox></div>
         </Card>
@@ -146,25 +157,37 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
       {/* Экспедитор / Грузоперевозчик */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Экспедитор" extra={<CheckBox checked={expIsCarrier} onChange={() => setExpIsCarrier(!expIsCarrier)}>Экспедитор одновременно является грузоперевозчиком</CheckBox>}>
-          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" /><LF label="Название" /></div>
+          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" value={expeditorInn} onChange={setExpInn} disabled={expAuto} /><LF label="Название" /></div>
         </Card>
         <Card title="Грузоперевозчик" help>
-          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" required /><LF label="Название" required /></div>
+          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" required value={carrierInnValue} onChange={setCarrierInn} disabled={expIsCarrier} /><LF label="Название" required /></div>
         </Card>
       </div>
 
-      {/* Клиент / Заказчик */}
+      {/* Клиент / Заказчик (Заказчик hidden when the forwarder is also the carrier) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Клиент" help>
           <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
         </Card>
-        <Card title="Заказчик" help>
-          <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
-        </Card>
+        {!expIsCarrier && (
+          <Card title="Заказчик" help>
+            <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+          </Card>
+        )}
       </div>
 
       {/* Тип транспорта */}
       <Card title="Тип транспорта" help>
+        <div className="mb-4 flex items-start gap-3 rounded-lg bg-sky-50 px-4 py-3 text-sm text-slate-600">
+          <Info className="mt-0.5 size-5 shrink-0 text-Smart-blue" />
+          <div>
+            <span className="font-medium text-Smart-blue">Изменение</span>
+            <ol className="ml-4 list-decimal">
+              <li>Теперь номер автомобиля вводится вручную</li>
+              <li>При создании ЭТТН номера транспортных средств автоматически сохраняются и доступны из списка</li>
+            </ol>
+          </div>
+        </div>
         <div className="flex flex-wrap items-center gap-6">
           <Radio checked={transport === 'auto'} onChange={() => setTransport('auto')}>Автомобиль</Radio>
           <Radio checked={transport === 'air'} onChange={() => setTransport('air')}>Воздушный</Radio>
