@@ -167,17 +167,28 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
         </Card>
       </div>
 
-      {/* Клиент / Заказчик (Заказчик hidden when the forwarder is also the carrier) */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Клиент" help>
-          <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
-        </Card>
-        {!expIsCarrier && (
-          <Card title="Заказчик" help>
-            <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
-          </Card>
-        )}
-      </div>
+      {/* Клиент / Заказчик:
+          - Экспедитор = грузоперевозчик → Заказчик исчезает
+          - + Грузоотправитель = экспедитор → и Клиент исчезает */}
+      {(() => {
+        const hideZakazchik = expIsCarrier
+        const hideKlient = senderIsForwarder && expIsCarrier
+        if (hideKlient && hideZakazchik) return null
+        return (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {!hideKlient && (
+              <Card title="Клиент" help>
+                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+              </Card>
+            )}
+            {!hideZakazchik && (
+              <Card title="Заказчик" help>
+                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+              </Card>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Тип транспорта */}
       <Card title="Тип транспорта" help>
