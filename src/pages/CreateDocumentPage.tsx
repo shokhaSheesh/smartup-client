@@ -12,6 +12,7 @@ import DoverennostForm from '@/features/documents/DoverennostForm'
 import DoverennostNewForm from '@/features/documents/DoverennostNewForm'
 import DogovorForm from '@/features/documents/DogovorForm'
 import ProizvolnyForm from '@/features/documents/ProizvolnyForm'
+import AktSverkiForm from '@/features/documents/AktSverkiForm'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -262,6 +263,9 @@ export default function CreateDocumentPage() {
   }
   if (docType === 'Произвольный документ') {
     return <ProizvolnyForm docType={docType} onDocType={setDocType} />
+  }
+  if (docType === 'Акт сверки') {
+    return <AktSverkiForm docType={docType} onDocType={setDocType} />
   }
 
   function updateItem(id: number, patch: Partial<LineItem>) {

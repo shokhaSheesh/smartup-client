@@ -69,10 +69,10 @@ export default function ProizvolnyForm({ docType, onDocType }: { docType: string
         </div>
 
         {/* Drop zone */}
-        <label className="mt-6 flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl bg-[#2e1a47] px-6 py-10 text-center transition hover:brightness-110">
-          <span className="text-3xl font-bold text-white">Перетащите файл сюда</span>
-          <span className="mt-2 text-base text-gray-300">или нажмите, чтобы найти на диске</span>
-          <span className="mt-1 text-sm text-gray-400">(.pdf не более 10мб)</span>
+        <label className="mt-6 flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-Smart-blue/40 bg-Smart-blue/5 px-6 py-10 text-center transition hover:bg-Smart-blue/10">
+          <span className="text-2xl font-bold text-Smart-blue">Перетащите файл сюда</span>
+          <span className="mt-2 text-base text-slate-500">или нажмите, чтобы найти на диске</span>
+          <span className="mt-1 text-sm text-slate-400">(.pdf не более 10мб)</span>
           <input type="file" accept="application/pdf" className="hidden" />
         </label>
       </Card>
