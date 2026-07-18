@@ -8,6 +8,7 @@ import HybridForm from '@/features/documents/HybridForm'
 import SmrForm from '@/features/documents/SmrForm'
 import TtnNewForm from '@/features/documents/TtnNewForm'
 import ActForm from '@/features/documents/ActForm'
+import DoverennostForm from '@/features/documents/DoverennostForm'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -246,6 +247,9 @@ export default function CreateDocumentPage() {
   }
   if (docType === 'Акт') {
     return <ActForm docType={docType} onDocType={setDocType} />
+  }
+  if (docType === 'Доверенность') {
+    return <DoverennostForm docType={docType} onDocType={setDocType} />
   }
 
   function updateItem(id: number, patch: Partial<LineItem>) {
