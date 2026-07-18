@@ -105,6 +105,7 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
 
   const contractRequired = shipment === 'seller' || shipment === 'processing'
   const isWarehouse = shipment === 'warehouse'
+  const forwarderActive = senderIsForwarder || receiverIsForwarder
   const isRail = transport === 'rail'
   const isAuto = transport === 'auto'
 
@@ -172,18 +173,18 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
           - + Грузоотправитель = экспедитор → и Клиент исчезает */}
       {(() => {
         const hideZakazchik = expIsCarrier
-        const hideKlient = senderIsForwarder && expIsCarrier
+        const hideKlient = forwarderActive && expIsCarrier
         if (hideKlient && hideZakazchik) return null
         return (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {!hideKlient && (
               <Card title="Клиент" help>
-                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown disabled={senderIsForwarder} /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date disabled={senderIsForwarder} /></div></div>
+                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown disabled={forwarderActive} /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date disabled={forwarderActive} /></div></div>
               </Card>
             )}
             {!hideZakazchik && (
               <Card title="Заказчик" help>
-                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date disabled={senderIsForwarder} /></div></div>
+                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date disabled={forwarderActive} /></div></div>
               </Card>
             )}
           </div>
