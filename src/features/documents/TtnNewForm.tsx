@@ -96,9 +96,12 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
   const [receiverInn, setReceiverInn] = useState('')
   const [expInn, setExpInn] = useState('')
   const [carrierInn, setCarrierInn] = useState('')
-  function toggleSenderForwarder() { const on = !senderIsForwarder; setSenderIsForwarder(on); setExpInn(on ? SENDER_INN : '') }
-  function toggleReceiverForwarder() { const on = !receiverIsForwarder; setReceiverIsForwarder(on); setExpInn(on ? receiverInn : '') }
-  function toggleExpCarrier() { const on = !expIsCarrier; setExpIsCarrier(on); setCarrierInn(on ? expInn : '') }
+  // The two «Одновременно и экспедитор» checkboxes are mutually exclusive.
+  function toggleSenderForwarder() { const on = !senderIsForwarder; setSenderIsForwarder(on); if (on) setReceiverIsForwarder(false); setExpInn(on ? SENDER_INN : '') }
+  function toggleReceiverForwarder() { const on = !receiverIsForwarder; setReceiverIsForwarder(on); if (on) setSenderIsForwarder(false); setExpInn(on ? receiverInn : '') }
+  function toggleExpCarrier() { setExpIsCarrier((v) => !v) }
+  // Грузоперевозчик mirrors Экспедитор ИНН live while linked.
+  const carrierInnValue = expIsCarrier ? expInn : carrierInn
 
   const contractRequired = shipment === 'seller' || shipment === 'processing'
   const isWarehouse = shipment === 'warehouse'
@@ -160,7 +163,7 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
           <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" value={expInn} onChange={setExpInn} /><LF label="Название" /></div>
         </Card>
         <Card title="Грузоперевозчик" help>
-          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" required value={carrierInn} onChange={setCarrierInn} /><LF label="Название" required /></div>
+          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" required value={carrierInnValue} onChange={setCarrierInn} /><LF label="Название" required /></div>
         </Card>
       </div>
 
