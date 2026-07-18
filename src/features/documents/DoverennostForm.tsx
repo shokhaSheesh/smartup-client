@@ -12,12 +12,12 @@ function num(v: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function LF({ label, required, value, dropdown, date }: { label: string; required?: boolean; value?: string; dropdown?: boolean; date?: boolean }) {
+function LF({ label, required, value, dropdown, date, disabled }: { label: string; required?: boolean; value?: string; dropdown?: boolean; date?: boolean; disabled?: boolean }) {
   const [v, setV] = useState(value ?? '')
   return (
-    <div className="relative flex flex-col rounded-lg border border-gray-300 bg-white px-3.5 py-1.5">
+    <div className={cn('relative flex flex-col rounded-lg border px-3.5 py-1.5', disabled ? 'border-gray-200 bg-gray-50' : 'border-gray-300 bg-white')}>
       <span className="text-xs text-gray-500">{label}{required && <span className="text-red-500"> *</span>}</span>
-      <input value={v} onChange={(e) => setV(e.target.value)} type={date ? 'date' : 'text'} className="w-full bg-transparent text-sm text-slate-800 outline-none" />
+      <input value={v} onChange={(e) => setV(e.target.value)} type={date ? 'date' : 'text'} disabled={disabled} className={cn('w-full bg-transparent text-sm outline-none', disabled ? 'text-gray-400' : 'text-slate-800')} />
       {dropdown && <ChevronDown className="pointer-events-none absolute right-3 top-4 size-4 text-gray-400" />}
     </div>
   )
@@ -28,13 +28,15 @@ function Card({ title, children }: { title?: string; children: React.ReactNode }
 }
 
 function OrgFields({ own }: { own: boolean }) {
+  // Bank/address/director auto-fill from tax data → disabled for the partner;
+  // Глав. бух. auto-fills → disabled everywhere.
   return (
     <div className="flex flex-col gap-3">
       <LF label="Наименование компании" required value={own ? '"UDEVS" MCHJ' : undefined} />
       <div className="grid grid-cols-2 gap-3"><LF label="Расчётный счёт" dropdown value={own ? '20208000505191969001' : undefined} /><LF label="МФО, SWIFT и др." dropdown value={own ? '01095' : undefined} /></div>
-      <LF label="Название банка" value={own ? 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK" АТ БАНКИ' : undefined} />
-      <LF label="Адрес" required value={own ? 'ТОШКЕНТ ШАҲАР ОЛМАЗОР ТУМАНИ Yangi Olmazor ko\'chasi' : undefined} />
-      <div className="grid grid-cols-2 gap-3"><LF label="Директор" value={own ? 'BAXODIROV AZIZBEK ULUG\'BEK' : undefined} /><LF label="Глав. бух." /></div>
+      <LF label="Название банка" value={own ? 'ТОШКЕНТ Ш., "ASIA ALLIANCE BANK" АТ БАНКИ' : undefined} disabled={!own} />
+      <LF label="Адрес" required value={own ? 'ТОШКЕНТ ШАҲАР ОЛМАЗОР ТУМАНИ Yangi Olmazor ko\'chasi' : undefined} disabled={!own} />
+      <div className="grid grid-cols-2 gap-3"><LF label="Директор" value={own ? 'BAXODIROV AZIZBEK ULUG\'BEK' : undefined} disabled={!own} /><LF label="Глав. бух." disabled /></div>
     </div>
   )
 }
@@ -79,15 +81,15 @@ export default function DoverennostForm({ docType, onDocType }: { docType: strin
         </div>
       </Card>
 
-      {/* Доверенное лицо */}
+      {/* Доверенное лицо (auto-populated → disabled) */}
       <Card title="Доверенное лицо">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <LF label="ПИНФЛ доверенного лица" required />
-          <LF label="ФИО" required />
-          <LF label="Должность" />
-          <LF label="Серия и номер паспорта" />
-          <LF label="Кем выдан" />
-          <LF label="Дата выдачи" date />
+          <LF label="ПИНФЛ доверенного лица" required disabled />
+          <LF label="ФИО" required disabled />
+          <LF label="Должность" disabled />
+          <LF label="Серия и номер паспорта" disabled />
+          <LF label="Кем выдан" disabled />
+          <LF label="Дата выдачи" date disabled />
         </div>
       </Card>
 
