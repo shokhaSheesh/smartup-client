@@ -91,14 +91,14 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
   const [trailer, setTrailer] = useState(false)
   const [driverIsResp, setDriverIsResp] = useState(false)
   const [items, setItems] = useState<Item[]>([emptyItem()])
-  // Linked ИНН fields
+  // Linked ИНН fields — checkbox toggles fill the target field (editable).
   const SENDER_INN = '307205394'
   const [receiverInn, setReceiverInn] = useState('')
   const [expInn, setExpInn] = useState('')
   const [carrierInn, setCarrierInn] = useState('')
-  const expeditorInn = senderIsForwarder ? SENDER_INN : receiverIsForwarder ? receiverInn : expInn
-  const carrierInnValue = expIsCarrier ? expeditorInn : carrierInn
-  const expAuto = senderIsForwarder || receiverIsForwarder
+  function toggleSenderForwarder() { const on = !senderIsForwarder; setSenderIsForwarder(on); setExpInn(on ? SENDER_INN : '') }
+  function toggleReceiverForwarder() { const on = !receiverIsForwarder; setReceiverIsForwarder(on); setExpInn(on ? receiverInn : '') }
+  function toggleExpCarrier() { const on = !expIsCarrier; setExpIsCarrier(on); setCarrierInn(on ? expInn : '') }
 
   const contractRequired = shipment === 'seller' || shipment === 'processing'
   const isWarehouse = shipment === 'warehouse'
@@ -142,10 +142,10 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
 
       {/* Грузоотправитель / Грузополучатель */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Грузоотправитель" extra={<div className="flex items-center gap-4"><CheckBox checked={senderAgent} onChange={() => setSenderAgent(!senderAgent)}>Агент (доверенное лицо)</CheckBox><CheckBox checked={senderIsForwarder} onChange={() => setSenderIsForwarder(!senderIsForwarder)}>Одновременно и экспедитор</CheckBox></div>}>
+        <Card title="Грузоотправитель" extra={<div className="flex items-center gap-4"><CheckBox checked={senderAgent} onChange={() => setSenderAgent(!senderAgent)}>Агент (доверенное лицо)</CheckBox><CheckBox checked={senderIsForwarder} onChange={toggleSenderForwarder}>Одновременно и экспедитор</CheckBox></div>}>
           <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" value="307205394" /><LF label="Название" value='"UDEVS" MCHJ' /></div>
         </Card>
-        <Card title="Грузополучатель" extra={<CheckBox checked={receiverIsForwarder} onChange={() => setReceiverIsForwarder(!receiverIsForwarder)} disabled={isWarehouse}>Одновременно и экспедитор</CheckBox>}>
+        <Card title="Грузополучатель" extra={<CheckBox checked={receiverIsForwarder} onChange={toggleReceiverForwarder} disabled={isWarehouse}>Одновременно и экспедитор</CheckBox>}>
           <div className="grid grid-cols-2 gap-3">
             <LF label="ИНН/ПИНФЛ" required={!oneSided} value={isWarehouse ? SENDER_INN : receiverInn} onChange={setReceiverInn} disabled={isWarehouse || oneSided} />
             <LF label="Название" required={!oneSided} value={isWarehouse ? '"UDEVS" MCHJ' : undefined} disabled={isWarehouse || oneSided} />
@@ -156,11 +156,11 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
 
       {/* Экспедитор / Грузоперевозчик */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Экспедитор" extra={<CheckBox checked={expIsCarrier} onChange={() => setExpIsCarrier(!expIsCarrier)}>Экспедитор одновременно является грузоперевозчиком</CheckBox>}>
-          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" value={expeditorInn} onChange={setExpInn} disabled={expAuto} /><LF label="Название" /></div>
+        <Card title="Экспедитор" extra={<CheckBox checked={expIsCarrier} onChange={toggleExpCarrier}>Экспедитор одновременно является грузоперевозчиком</CheckBox>}>
+          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" value={expInn} onChange={setExpInn} /><LF label="Название" /></div>
         </Card>
         <Card title="Грузоперевозчик" help>
-          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" required value={carrierInnValue} onChange={setCarrierInn} disabled={expIsCarrier} /><LF label="Название" required /></div>
+          <div className="grid grid-cols-2 gap-3"><LF label="ИНН/ПИНФЛ" required value={carrierInn} onChange={setCarrierInn} /><LF label="Название" required /></div>
         </Card>
       </div>
 
