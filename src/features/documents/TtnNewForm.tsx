@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Plus, Trash2, Check, HelpCircle, Map, Search, Info } from 'lucide-react'
+import { ChevronDown, Plus, Trash2, Check, HelpCircle, Map, Search } from 'lucide-react'
 import { PillSelect } from '@/components/ui/PillSelect'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
@@ -178,12 +178,12 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {!hideKlient && (
               <Card title="Клиент" help>
-                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown disabled={senderIsForwarder} /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date disabled={senderIsForwarder} /></div></div>
               </Card>
             )}
             {!hideZakazchik && (
               <Card title="Заказчик" help>
-                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date /></div></div>
+                <div className="flex flex-col gap-3"><LF label="ИНН/ПИНФЛ" dropdown /><div className="grid grid-cols-2 gap-3"><LF label="Номер контракта" /><LF label="Дата контракта" date disabled={senderIsForwarder} /></div></div>
               </Card>
             )}
           </div>
@@ -192,16 +192,6 @@ export default function TtnNewForm({ docType, onDocType }: { docType: string; on
 
       {/* Тип транспорта */}
       <Card title="Тип транспорта" help>
-        <div className="mb-4 flex items-start gap-3 rounded-lg bg-sky-50 px-4 py-3 text-sm text-slate-600">
-          <Info className="mt-0.5 size-5 shrink-0 text-Smart-blue" />
-          <div>
-            <span className="font-medium text-Smart-blue">Изменение</span>
-            <ol className="ml-4 list-decimal">
-              <li>Теперь номер автомобиля вводится вручную</li>
-              <li>При создании ЭТТН номера транспортных средств автоматически сохраняются и доступны из списка</li>
-            </ol>
-          </div>
-        </div>
         <div className="flex flex-wrap items-center gap-6">
           <Radio checked={transport === 'auto'} onChange={() => setTransport('auto')}>Автомобиль</Radio>
           <Radio checked={transport === 'air'} onChange={() => setTransport('air')}>Воздушный</Radio>
