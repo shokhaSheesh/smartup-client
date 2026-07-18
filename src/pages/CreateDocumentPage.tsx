@@ -14,6 +14,7 @@ import DogovorForm from '@/features/documents/DogovorForm'
 import ProizvolnyForm from '@/features/documents/ProizvolnyForm'
 import AktSverkiForm from '@/features/documents/AktSverkiForm'
 import MultiProizvolnyForm from '@/features/documents/MultiProizvolnyForm'
+import ProtokolForm from '@/features/documents/ProtokolForm'
 import { DOC_TYPES } from '@/data/docTypes'
 import { cn } from '@/lib/cn'
 
@@ -267,6 +268,9 @@ export default function CreateDocumentPage() {
   }
   if (docType === 'Многосторонний произвольный документ') {
     return <MultiProizvolnyForm docType={docType} onDocType={setDocType} />
+  }
+  if (docType === 'Протокол собрания учредителей') {
+    return <ProtokolForm docType={docType} onDocType={setDocType} />
   }
   if (docType === 'Акт сверки') {
     return <AktSverkiForm docType={docType} onDocType={setDocType} />
