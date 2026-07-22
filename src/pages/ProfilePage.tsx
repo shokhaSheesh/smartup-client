@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Upload,
   Pencil,
@@ -7,7 +7,6 @@ import {
   GripVertical,
   Plus,
   Trash2,
-  Check,
   RefreshCw,
   Save,
 } from 'lucide-react'
@@ -20,12 +19,14 @@ import {
   branches as initialBranches,
   roles as initialRoles,
   users as initialUsers,
-  permissions,
+  permissionPages,
+  CRUD,
   regions,
   districts,
   logs,
 } from '@/data/profile'
-import type { Role, User } from '@/data/profile'
+import { DOC_TYPES } from '@/data/docTypes'
+import type { Role, User, RolePerms, CrudPerm, CrudKey } from '@/data/profile'
 import { cn } from '@/lib/cn'
 
 type Tab = 'personal' | 'branches' | 'requisites' | 'access' | 'users' | 'logs'
@@ -397,48 +398,129 @@ function RequisitesTab() {
 
 /* ---------- Доступы ---------- */
 
-function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; isNew: boolean; onClose: () => void; onSave: (name: string) => void }) {
+/** Small on/off toggle switch (Smart-blue when on). */
+function Switch({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onClick}
+      className={cn('relative h-5 w-9 shrink-0 rounded-full transition', on ? 'bg-Smart-blue' : 'bg-gray-200')}
+    >
+      <span className={cn('absolute top-0.5 size-4 rounded-full bg-white shadow-sm transition-all', on ? 'left-[18px]' : 'left-0.5')} />
+    </button>
+  )
+}
+
+const noPerm = (): CrudPerm => ({ create: false, read: false, update: false, delete: false })
+function buildPerms(keys: string[], src?: Record<string, CrudPerm>): Record<string, CrudPerm> {
+  return Object.fromEntries(keys.map((k) => [k, src?.[k] ? { ...src[k] } : noPerm()]))
+}
+function initPerms(role: Role | null): RolePerms {
+  return {
+    pages: buildPerms(permissionPages, role?.perms?.pages),
+    docTypes: buildPerms([...DOC_TYPES], role?.perms?.docTypes),
+  }
+}
+
+type PermTab = 'pages' | 'docTypes'
+
+function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; isNew: boolean; onClose: () => void; onSave: (name: string, perms: RolePerms) => void }) {
   const [name, setName] = useState('')
-  const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState<Set<string>>(new Set(['Доступ к подписанию']))
+  const [tab, setTab] = useState<PermTab>('pages')
+  const [perms, setPerms] = useState<RolePerms>(() => initPerms(role))
+
+  // Re-seed when a different role is opened.
+  const roleId = role?.id
+  useEffect(() => {
+    setName('')
+    setTab('pages')
+    setPerms(initPerms(role))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roleId])
+
+  const rows = tab === 'pages' ? permissionPages : [...DOC_TYPES]
+  const current = perms[tab]
+
+  function toggle(key: string, field: CrudKey) {
+    setPerms((p) => ({ ...p, [tab]: { ...p[tab], [key]: { ...p[tab][key], [field]: !p[tab][key][field] } } }))
+  }
+  function toggleColumn(field: CrudKey) {
+    const allOn = rows.every((k) => current[k][field])
+    setPerms((p) => ({
+      ...p,
+      [tab]: Object.fromEntries(rows.map((k) => [k, { ...p[tab][k], [field]: !allOn }])),
+    }))
+  }
+  function toggleRow(key: string) {
+    const allOn = CRUD.every((c) => current[key][c.key])
+    setPerms((p) => ({
+      ...p,
+      [tab]: { ...p[tab], [key]: { create: !allOn, read: !allOn, update: !allOn, delete: !allOn } },
+    }))
+  }
+
+  const TABS: { key: PermTab; label: string }[] = [
+    { key: 'pages', label: 'Страницы' },
+    { key: 'docTypes', label: 'Типы документов' },
+  ]
+  const grid = 'grid grid-cols-[1fr_repeat(4,64px)] items-center gap-2'
 
   return (
-    <Modal open={Boolean(role)} onClose={onClose} title={isNew ? 'Новая роль' : 'Редактирование роли'}>
+    <Modal open={Boolean(role)} onClose={onClose} title={isNew ? 'Новая роль' : 'Редактирование роли'} maxWidth="max-w-2xl">
       {role && (
         <div className="flex flex-col gap-5 p-6">
           <div>
             <label className="mb-1.5 block text-base font-medium text-slate-800">Название</label>
             <input className={field} placeholder={role.name} value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div>
-            <label className="mb-1.5 block text-base font-medium text-slate-800">Настройки</label>
-            <button onClick={() => setOpen((v) => !v)} className={cn(field, 'flex items-center justify-between text-left', selected.size === 0 && 'text-gray-400')}>
-              {selected.size === 0 ? 'Выберите' : `Выбрано: ${selected.size}`}
-              <ChevronDown className={cn('size-5 text-gray-400 transition', open && 'rotate-180')} />
-            </button>
-            {open && (
-              <div className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-gray-200">
-                {permissions.map((p) => {
-                  const on = selected.has(p)
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => setSelected((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n })}
-                      className={cn('flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm', on ? 'bg-sky-50 text-Smart-blue' : 'text-slate-700 hover:bg-gray-50')}
-                    >
-                      <span className={cn('flex size-4 items-center justify-center rounded-sm border', on ? 'border-Smart-blue bg-Smart-blue text-white' : 'border-gray-300')}>
-                        {on && <Check className="size-3" strokeWidth={3} />}
-                      </span>
-                      <span className="flex-1">{p}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+
+          {/* Tabs */}
+          <div className="flex items-center gap-6 border-b border-gray-200">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={cn(
+                  'flex h-10 items-center border-b-2 text-sm font-medium transition',
+                  tab === t.key ? 'border-Smart-blue text-slate-800' : 'border-transparent text-gray-400 hover:text-slate-600',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
+
+          {/* Permission grid */}
+          <div className="overflow-hidden rounded-xl border border-gray-200">
+            <div className={cn(grid, 'border-b border-gray-200 bg-gray-50 px-4 py-2.5')}>
+              <span className="text-xs font-medium text-gray-500">{tab === 'pages' ? 'Страница' : 'Тип документа'}</span>
+              {CRUD.map((c) => (
+                <button key={c.key} onClick={() => toggleColumn(c.key)} className="text-center text-xs font-medium text-gray-500 transition hover:text-Smart-blue">
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            <div className="max-h-72 overflow-y-auto">
+              {rows.map((key, i) => (
+                <div key={key} className={cn(grid, 'px-4 py-2.5', i > 0 && 'border-t border-gray-100')}>
+                  <button onClick={() => toggleRow(key)} className="truncate pr-2 text-left text-sm text-slate-700 transition hover:text-Smart-blue" title={key}>
+                    {key}
+                  </button>
+                  {CRUD.map((c) => (
+                    <span key={c.key} className="flex justify-center">
+                      <Switch on={current[key][c.key]} onClick={() => toggle(key, c.key)} />
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <button
             disabled={isNew && !name.trim()}
-            onClick={() => onSave(name || role.name)}
+            onClick={() => onSave(name || role.name, perms)}
             className="rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white hover:brightness-105 disabled:opacity-50"
           >
             Сохранить
@@ -458,11 +540,11 @@ function AccessTab() {
     setIsNew(true)
     setEditing({ id: -Date.now(), name: '', users: [] })
   }
-  function save(name: string) {
+  function save(name: string, perms: RolePerms) {
     if (isNew) {
-      setList((l) => [...l, { id: Math.max(0, ...l.map((r) => r.id)) + 1, name, users: [] }])
+      setList((l) => [...l, { id: Math.max(0, ...l.map((r) => r.id)) + 1, name, users: [], perms }])
     } else if (editing) {
-      setList((l) => l.map((r) => (r.id === editing.id ? { ...r, name } : r)))
+      setList((l) => l.map((r) => (r.id === editing.id ? { ...r, name, perms } : r)))
     }
     setEditing(null)
   }

@@ -23,10 +23,16 @@ export const users: User[] = [
   { id: 3, name: 'Kristin Watson', role: 'Управляющий' },
 ]
 
+export type CrudPerm = { create: boolean; read: boolean; update: boolean; delete: boolean }
+export type RolePerms = {
+  pages: Record<string, CrudPerm>
+  docTypes: Record<string, CrudPerm>
+}
 export type Role = {
   id: number
   name: string
   users: string[]
+  perms?: RolePerms
 }
 
 export const roles: Role[] = [
@@ -34,6 +40,28 @@ export const roles: Role[] = [
   { id: 2, name: 'Суперадмин', users: [] },
   { id: 3, name: 'Админ', users: [] },
   { id: 4, name: 'Управляющий', users: [] },
+]
+
+/** CRUD columns shown for every page / document type in the role editor. */
+export const CRUD = [
+  { key: 'create', label: 'Создание' },
+  { key: 'read', label: 'Чтение' },
+  { key: 'update', label: 'Изменение' },
+  { key: 'delete', label: 'Удаление' },
+] as const
+export type CrudKey = (typeof CRUD)[number]['key']
+
+/** Sidebar pages governed by role permissions (tab 1). */
+export const permissionPages: string[] = [
+  'Дашборд',
+  'Документы: Входящие',
+  'Документы: Исходящие',
+  'Документы: Черновики',
+  'Документы: Создать документ',
+  'Документы: Импорт Excel',
+  'Тарифы',
+  'Товар и услуги',
+  'Профиль',
 ]
 
 /** Permissions shown in the role edit "Настройки" multi-select. */
