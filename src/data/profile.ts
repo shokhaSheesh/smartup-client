@@ -23,10 +23,11 @@ export const users: User[] = [
   { id: 3, name: 'Kristin Watson', role: 'Управляющий' },
 ]
 
-export type CrudPerm = { create: boolean; read: boolean; update: boolean; delete: boolean }
+/** Per-item permission flags, keyed by action key (e.g. 'read', 'sign'). */
+export type PermFlags = Record<string, boolean>
 export type RolePerms = {
-  pages: Record<string, CrudPerm>
-  docTypes: Record<string, CrudPerm>
+  pages: Record<string, PermFlags>
+  docTypes: Record<string, PermFlags>
 }
 export type Role = {
   id: number
@@ -42,14 +43,24 @@ export const roles: Role[] = [
   { id: 4, name: 'Управляющий', users: [] },
 ]
 
-/** CRUD columns shown for every page / document type in the role editor. */
-export const CRUD = [
+export type PermAction = { key: string; label: string }
+
+/** Tab 1 — sidebar pages use CRUD. */
+export const PAGE_ACTIONS: PermAction[] = [
   { key: 'create', label: 'Создание' },
   { key: 'read', label: 'Чтение' },
   { key: 'update', label: 'Изменение' },
   { key: 'delete', label: 'Удаление' },
-] as const
-export type CrudKey = (typeof CRUD)[number]['key']
+]
+
+/** Tab 2 — document types use lifecycle actions, not CRUD. */
+export const DOC_ACTIONS: PermAction[] = [
+  { key: 'view', label: 'Просмотр' },
+  { key: 'create', label: 'Создание' },
+  { key: 'sign', label: 'Подписание' },
+  { key: 'reject', label: 'Отклонение' },
+  { key: 'cancel', label: 'Отмена' },
+]
 
 /** Sidebar pages governed by role permissions (tab 1). */
 export const permissionPages: string[] = [

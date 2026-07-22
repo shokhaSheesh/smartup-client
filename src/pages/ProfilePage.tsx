@@ -20,13 +20,14 @@ import {
   roles as initialRoles,
   users as initialUsers,
   permissionPages,
-  CRUD,
+  PAGE_ACTIONS,
+  DOC_ACTIONS,
   regions,
   districts,
   logs,
 } from '@/data/profile'
 import { DOC_TYPES } from '@/data/docTypes'
-import type { Role, User, RolePerms, CrudPerm, CrudKey } from '@/data/profile'
+import type { Role, User, RolePerms, PermFlags } from '@/data/profile'
 import { cn } from '@/lib/cn'
 
 type Tab = 'personal' | 'branches' | 'requisites' | 'access' | 'users' | 'logs'
@@ -413,14 +414,15 @@ function Switch({ on, onClick }: { on: boolean; onClick: () => void }) {
   )
 }
 
-const noPerm = (): CrudPerm => ({ create: false, read: false, update: false, delete: false })
-function buildPerms(keys: string[], src?: Record<string, CrudPerm>): Record<string, CrudPerm> {
-  return Object.fromEntries(keys.map((k) => [k, src?.[k] ? { ...src[k] } : noPerm()]))
+function buildPerms(keys: string[], actions: { key: string }[], src?: Record<string, PermFlags>): Record<string, PermFlags> {
+  return Object.fromEntries(
+    keys.map((k) => [k, Object.fromEntries(actions.map((a) => [a.key, src?.[k]?.[a.key] ?? false]))]),
+  )
 }
 function initPerms(role: Role | null): RolePerms {
   return {
-    pages: buildPerms(permissionPages, role?.perms?.pages),
-    docTypes: buildPerms([...DOC_TYPES], role?.perms?.docTypes),
+    pages: buildPerms(permissionPages, PAGE_ACTIONS, role?.perms?.pages),
+    docTypes: buildPerms([...DOC_TYPES], DOC_ACTIONS, role?.perms?.docTypes),
   }
 }
 
@@ -441,12 +443,13 @@ function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; is
   }, [roleId])
 
   const rows = tab === 'pages' ? permissionPages : [...DOC_TYPES]
+  const actions = tab === 'pages' ? PAGE_ACTIONS : DOC_ACTIONS
   const current = perms[tab]
 
-  function toggle(key: string, field: CrudKey) {
+  function toggle(key: string, field: string) {
     setPerms((p) => ({ ...p, [tab]: { ...p[tab], [key]: { ...p[tab][key], [field]: !p[tab][key][field] } } }))
   }
-  function toggleColumn(field: CrudKey) {
+  function toggleColumn(field: string) {
     const allOn = rows.every((k) => current[k][field])
     setPerms((p) => ({
       ...p,
@@ -454,10 +457,10 @@ function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; is
     }))
   }
   function toggleRow(key: string) {
-    const allOn = CRUD.every((c) => current[key][c.key])
+    const allOn = actions.every((a) => current[key][a.key])
     setPerms((p) => ({
       ...p,
-      [tab]: { ...p[tab], [key]: { create: !allOn, read: !allOn, update: !allOn, delete: !allOn } },
+      [tab]: { ...p[tab], [key]: Object.fromEntries(actions.map((a) => [a.key, !allOn])) },
     }))
   }
 
@@ -465,7 +468,8 @@ function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; is
     { key: 'pages', label: 'Страницы' },
     { key: 'docTypes', label: 'Типы документов' },
   ]
-  const grid = 'grid grid-cols-[1fr_repeat(4,64px)] items-center gap-2'
+  const grid = 'grid items-center gap-2'
+  const gridCols = { gridTemplateColumns: `minmax(0,1fr) repeat(${actions.length}, 56px)` }
 
   return (
     <Modal open={Boolean(role)} onClose={onClose} title={isNew ? 'Новая роль' : 'Редактирование роли'} maxWidth="max-w-2xl">
@@ -494,23 +498,23 @@ function RoleEditModal({ role, isNew, onClose, onSave }: { role: Role | null; is
 
           {/* Permission grid */}
           <div className="overflow-hidden rounded-xl border border-gray-200">
-            <div className={cn(grid, 'border-b border-gray-200 bg-gray-50 px-4 py-2.5')}>
+            <div className={cn(grid, 'border-b border-gray-200 bg-gray-50 px-4 py-2.5')} style={gridCols}>
               <span className="text-xs font-medium text-gray-500">{tab === 'pages' ? 'Страница' : 'Тип документа'}</span>
-              {CRUD.map((c) => (
-                <button key={c.key} onClick={() => toggleColumn(c.key)} className="text-center text-xs font-medium text-gray-500 transition hover:text-Smart-blue">
-                  {c.label}
+              {actions.map((a) => (
+                <button key={a.key} onClick={() => toggleColumn(a.key)} className="text-center text-[11px] font-medium leading-tight text-gray-500 transition hover:text-Smart-blue">
+                  {a.label}
                 </button>
               ))}
             </div>
             <div className="max-h-72 overflow-y-auto">
               {rows.map((key, i) => (
-                <div key={key} className={cn(grid, 'px-4 py-2.5', i > 0 && 'border-t border-gray-100')}>
+                <div key={key} className={cn(grid, 'px-4 py-2.5', i > 0 && 'border-t border-gray-100')} style={gridCols}>
                   <button onClick={() => toggleRow(key)} className="truncate pr-2 text-left text-sm text-slate-700 transition hover:text-Smart-blue" title={key}>
                     {key}
                   </button>
-                  {CRUD.map((c) => (
-                    <span key={c.key} className="flex justify-center">
-                      <Switch on={current[key][c.key]} onClick={() => toggle(key, c.key)} />
+                  {actions.map((a) => (
+                    <span key={a.key} className="flex justify-center">
+                      <Switch on={current[key][a.key]} onClick={() => toggle(key, a.key)} />
                     </span>
                   ))}
                 </div>
