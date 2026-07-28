@@ -62,6 +62,21 @@ export const DOC_ACTIONS: PermAction[] = [
   { key: 'cancel', label: 'Отмена' },
 ]
 
+/**
+ * Telegram routing rule: incoming documents of `docTypes` arriving from any of
+ * `companies` (by ИНН) are auto-forwarded to `telegram` for accept/reject.
+ */
+export type TelegramRoute = {
+  id: number
+  telegram: string
+  companies: string[] // counterparty ИНН values
+  docTypes: string[]
+}
+
+export const telegramRoutes: TelegramRoute[] = [
+  { id: 1, telegram: '@muxlisa_x', companies: ['307205394'], docTypes: ['Счет-фактура без акта', 'Акт'] },
+]
+
 /** Sidebar pages governed by role permissions (tab 1). */
 export const permissionPages: string[] = [
   'Дашборд',

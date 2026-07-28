@@ -7,6 +7,9 @@ import {
   GripVertical,
   Plus,
   Trash2,
+  Check,
+  X,
+  Send,
   RefreshCw,
   Save,
 } from 'lucide-react'
@@ -19,6 +22,7 @@ import {
   branches as initialBranches,
   roles as initialRoles,
   users as initialUsers,
+  telegramRoutes as initialTelegramRoutes,
   permissionPages,
   PAGE_ACTIONS,
   DOC_ACTIONS,
@@ -27,16 +31,17 @@ import {
   logs,
 } from '@/data/profile'
 import { DOC_TYPES } from '@/data/docTypes'
-import type { Role, User, RolePerms, PermFlags } from '@/data/profile'
+import type { Role, User, RolePerms, PermFlags, TelegramRoute } from '@/data/profile'
 import { cn } from '@/lib/cn'
 
-type Tab = 'personal' | 'branches' | 'requisites' | 'access' | 'users' | 'logs'
+type Tab = 'personal' | 'branches' | 'requisites' | 'access' | 'users' | 'telegram' | 'logs'
 const TABS: { key: Tab; label: string }[] = [
   { key: 'personal', label: 'Данные' },
   { key: 'branches', label: 'Филиалы' },
   { key: 'requisites', label: 'Реквизиты' },
   { key: 'access', label: 'Доступы' },
   { key: 'users', label: 'Пользователи' },
+  { key: 'telegram', label: 'Telegram-бот' },
   { key: 'logs', label: 'Журнал логов' },
 ]
 
@@ -697,6 +702,183 @@ function UsersTab() {
   )
 }
 
+/* ---------- Telegram-бот ---------- */
+
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2.5 py-1 text-sm font-medium text-Smart-blue">
+      {label}
+      <button onClick={onRemove} className="text-Smart-blue/70 hover:text-Smart-blue"><X className="size-3.5" /></button>
+    </span>
+  )
+}
+
+function TelegramRouteModal({ route, isNew, onClose, onSave }: { route: TelegramRoute | null; isNew: boolean; onClose: () => void; onSave: (r: TelegramRoute) => void }) {
+  const [telegram, setTelegram] = useState('')
+  const [companies, setCompanies] = useState<string[]>([])
+  const [innInput, setInnInput] = useState('')
+  const [docTypes, setDocTypes] = useState<Set<string>>(new Set())
+  const [typesOpen, setTypesOpen] = useState(false)
+
+  const routeId = route?.id
+  useEffect(() => {
+    setTelegram(route?.telegram ?? '')
+    setCompanies(route?.companies ?? [])
+    setInnInput('')
+    setDocTypes(new Set(route?.docTypes ?? []))
+    setTypesOpen(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeId])
+
+  function addInn() {
+    const v = innInput.trim()
+    if (v && !companies.includes(v)) setCompanies((c) => [...c, v])
+    setInnInput('')
+  }
+
+  const valid = telegram.trim() && companies.length > 0 && docTypes.size > 0
+
+  return (
+    <Modal open={Boolean(route)} onClose={onClose} title={isNew ? 'Новое правило' : 'Редактирование правила'} maxWidth="max-w-lg">
+      {route && (
+        <div className="flex flex-col gap-5 p-6">
+          {/* Telegram username */}
+          <div>
+            <label className="mb-1.5 block text-base font-medium text-slate-800">Telegram username</label>
+            <div className={cn(field, 'flex items-center gap-1 p-0')}>
+              <span className="pl-4 text-base text-gray-400">@</span>
+              <input
+                className="w-full rounded-xl bg-transparent py-3 pr-4 text-base text-slate-800 outline-none placeholder:text-gray-400"
+                placeholder="username"
+                value={telegram.replace(/^@/, '')}
+                onChange={(e) => setTelegram(e.target.value.replace(/^@/, ''))}
+              />
+            </div>
+          </div>
+
+          {/* Companies (ИНН) */}
+          <div>
+            <label className="mb-1.5 block text-base font-medium text-slate-800">Компании (ИНН)</label>
+            <div className="flex items-center gap-2">
+              <input
+                className={field}
+                placeholder="Введите ИНН"
+                value={innInput}
+                onChange={(e) => setInnInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addInn() } }}
+              />
+              <button onClick={addInn} className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-Smart-blue text-white hover:brightness-105"><Plus className="size-5" /></button>
+            </div>
+            {companies.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {companies.map((c) => <Chip key={c} label={c} onRemove={() => setCompanies((list) => list.filter((x) => x !== c))} />)}
+              </div>
+            )}
+          </div>
+
+          {/* Document types */}
+          <div>
+            <label className="mb-1.5 block text-base font-medium text-slate-800">Типы документов</label>
+            <button onClick={() => setTypesOpen((v) => !v)} className={cn(field, 'flex items-center justify-between text-left', docTypes.size === 0 && 'text-gray-400')}>
+              {docTypes.size === 0 ? 'Выберите' : `Выбрано: ${docTypes.size}`}
+              <ChevronDown className={cn('size-5 text-gray-400 transition', typesOpen && 'rotate-180')} />
+            </button>
+            {typesOpen && (
+              <div className="mt-2 max-h-60 overflow-y-auto rounded-xl border border-gray-200">
+                {DOC_TYPES.map((t) => {
+                  const on = docTypes.has(t)
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setDocTypes((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n })}
+                      className={cn('flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm', on ? 'bg-sky-50 text-Smart-blue' : 'text-slate-700 hover:bg-gray-50')}
+                    >
+                      <span className={cn('flex size-4 items-center justify-center rounded-sm border', on ? 'border-Smart-blue bg-Smart-blue text-white' : 'border-gray-300')}>
+                        {on && <Check className="size-3" strokeWidth={3} />}
+                      </span>
+                      <span className="flex-1">{t}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <button
+            disabled={!valid}
+            onClick={() => onSave({ id: route.id, telegram: telegram.startsWith('@') ? telegram : `@${telegram}`, companies, docTypes: [...docTypes] })}
+            className="rounded-lg bg-Smart-blue py-3 text-base font-semibold text-white hover:brightness-105 disabled:opacity-50"
+          >
+            Сохранить
+          </button>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function TelegramTab() {
+  const [list, setList] = useState(initialTelegramRoutes)
+  const [editing, setEditing] = useState<TelegramRoute | null>(null)
+  const [isNew, setIsNew] = useState(false)
+
+  function openNew() {
+    setIsNew(true)
+    setEditing({ id: -Date.now(), telegram: '', companies: [], docTypes: [] })
+  }
+  function save(r: TelegramRoute) {
+    if (isNew) {
+      setList((l) => [...l, { ...r, id: Math.max(0, ...l.map((x) => x.id)) + 1 }])
+    } else {
+      setList((l) => l.map((x) => (x.id === r.id ? r : x)))
+    }
+    setEditing(null)
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900">Telegram-уведомления</h2>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+            Входящие документы выбранных типов от указанных компаний бот автоматически отправит пользователю в Telegram для подтверждения или отклонения.
+          </p>
+        </div>
+        <button onClick={openNew} className="flex shrink-0 items-center gap-2 rounded-lg bg-Smart-green px-5 py-2.5 text-base font-semibold text-white hover:brightness-105">
+          <Plus className="size-5" /> Добавить
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+        <div className="grid grid-cols-[60px_1fr_1.4fr_1.4fr_120px] gap-4 border-b border-gray-200 px-6 py-4 text-base text-gray-500">
+          <span>№</span><span>Telegram</span><span>Компании (ИНН)</span><span>Типы документов</span><span />
+        </div>
+        {list.length === 0 && <div className="px-6 py-10 text-center text-gray-400">Правила не добавлены</div>}
+        {list.map((r, i) => (
+          <div key={r.id} className={cn('grid grid-cols-[60px_1fr_1.4fr_1.4fr_120px] items-center gap-4 px-6 py-5', i > 0 && 'border-t border-gray-100')}>
+            <span className="text-gray-900">{i + 1}</span>
+            <span className="flex items-center gap-2 font-medium text-slate-800"><Send className="size-4 text-Smart-blue" />{r.telegram}</span>
+            <span className="flex flex-wrap gap-1.5">
+              {r.companies.slice(0, 2).map((c) => <span key={c} className="rounded-md bg-gray-100 px-2 py-0.5 text-sm text-slate-600">{c}</span>)}
+              {r.companies.length > 2 && <span className="text-sm text-gray-400">+{r.companies.length - 2}</span>}
+            </span>
+            <span className="flex flex-wrap gap-1.5">
+              {r.docTypes.slice(0, 2).map((t) => <span key={t} className="truncate rounded-md bg-sky-50 px-2 py-0.5 text-sm text-Smart-blue">{t}</span>)}
+              {r.docTypes.length > 2 && <span className="text-sm text-gray-400">+{r.docTypes.length - 2}</span>}
+            </span>
+            <div className="flex items-center justify-end gap-2">
+              <button onClick={() => { setIsNew(false); setEditing(r) }} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-gray-50"><Pencil className="size-5" /></button>
+              <button onClick={() => setList((l) => l.filter((x) => x.id !== r.id))} className="flex size-9 items-center justify-center rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-500"><Trash2 className="size-5" /></button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <TelegramRouteModal route={editing} isNew={isNew} onClose={() => setEditing(null)} onSave={save} />
+    </div>
+  )
+}
+
 /* ---------- Журнал логов ---------- */
 
 function LogsTab() {
@@ -750,6 +932,7 @@ export default function ProfilePage() {
       {tab === 'requisites' && <RequisitesTab />}
       {tab === 'access' && <AccessTab />}
       {tab === 'users' && <UsersTab />}
+      {tab === 'telegram' && <TelegramTab />}
       {tab === 'logs' && <LogsTab />}
     </div>
   )
