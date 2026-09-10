@@ -243,7 +243,7 @@ export default function CreateDocumentPage() {
   if (docType === 'Товарно-транспортная накладная') {
     return <TtnForm docType={docType} onDocType={setDocType} />
   }
-  if (docType === 'Гибридная счет-фактура' || docType === 'Гибридная счет-фактура (ФАРМ)') {
+  if (docType === 'Гибридная счёт-фактура' || docType === 'Гибридная счёт-фактура (ФАРМ)') {
     return <HybridForm docType={docType} onDocType={setDocType} />
   }
   if (docType === 'ЭСФ для строительно-монтажных работ') {
@@ -261,7 +261,7 @@ export default function CreateDocumentPage() {
   if (docType === 'Доверенность (новая)') {
     return <DoverennostNewForm docType={docType} onDocType={setDocType} />
   }
-  if (docType === 'Договор (ГНК)') {
+  if (docType === 'Договор (НК)') {
     return <DogovorForm docType={docType} onDocType={setDocType} />
   }
   if (docType === 'Произвольный документ') {

@@ -100,7 +100,7 @@ export default function HybridForm({ docType, onDocType }: { docType: string; on
 
   const showContract = variant !== 'Дополнительный'
   const showOldId = variant !== 'Стандартный'
-  const isFarm = docType === 'Гибридная счет-фактура (ФАРМ)'
+  const isFarm = docType === 'Гибридная счёт-фактура (ФАРМ)'
 
   const field = 'w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-gray-400 focus:border-Smart-blue'
   function openMarking(id: number) { setMarkingRow(id); setMarkOrderId(''); setMarkCodes(['']) }
