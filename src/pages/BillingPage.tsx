@@ -17,7 +17,8 @@ import {
   currentSubscription,
   balance,
   billingId,
-  savedCards as initialCards,
+  removeSavedCard,
+  useSavedCards,
   paymentHistory,
 } from '@/data/billing'
 import type { Plan } from '@/data/billing'
@@ -159,7 +160,7 @@ function PlansTab({
 
 function CardsTab() {
   const navigate = useNavigate()
-  const [cards, setCards] = useState(initialCards)
+  const cards = useSavedCards()
   return (
     <div className="flex flex-col gap-3">
       {cards.map((card) => (
@@ -172,13 +173,16 @@ function CardsTab() {
           </div>
           <div className="flex-1">
             <div className="font-medium text-slate-800">{card.masked}</div>
-            <div className="text-sm text-gray-400">{card.exp}</div>
+            <div className="text-sm text-gray-400">
+              {card.exp} ·{' '}
+              {card.owner === 'company' ? 'Корпоративная' : `Личная · ${card.holderName}`}
+            </div>
           </div>
           <button className="flex size-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50">
             <Pencil className="size-4" />
           </button>
           <button
-            onClick={() => setCards((c) => c.filter((x) => x.id !== card.id))}
+            onClick={() => removeSavedCard(card.id)}
             className="flex size-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-500"
           >
             <Trash2 className="size-4" />
